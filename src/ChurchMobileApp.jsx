@@ -551,14 +551,23 @@ function ChurchMobileApp() {
       <Drawer
         title={
           <Space>
-            <Avatar
-              size={40}
-              style={{ background: "#1a365d" }}
-              icon={<HomeOutlined />}
-            />
+            <div style={{ 
+              width: 50, 
+              height: 40, 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              background: "#f0f8ff",
+              borderRadius: 8
+            }}>
+              <img 
+                src="/images/sycamore-logo-hd.svg" 
+                alt="Sycamore Church Logo" 
+                style={{ height: 35, width: "auto" }}
+              />
+            </div>
             <div>
-              <div style={{ fontWeight: 600, color: "#1a365d" }}>Sycamore Church</div>
-              <div style={{ fontSize: 12, color: "#666" }}>Church App</div>
+              <div style={{ fontSize: 12, color: "#666" }}>Church Mobile App</div>
             </div>
           </Space>
         }
@@ -668,18 +677,18 @@ function ChurchMobileApp() {
           </div>
           
           <div style={{ textAlign: "center" }}>
-            <Avatar
-              size={60}
-              style={{
-                background: "rgba(255,255,255,0.2)",
-                marginBottom: 12,
-                border: "2px solid rgba(255,255,255,0.3)"
-              }}
-              icon={<FireOutlined />}
-            />
-            <Title level={2} style={{ color: "#fff", marginBottom: 4, fontWeight: 800 }}>
-              Sycamore Church
-            </Title>
+            <div style={{ marginBottom: 12 }}>
+              <img 
+                src="/images/sycamore-logo-hd.svg" 
+                alt="Sycamore Church Logo" 
+                style={{ 
+                  height: 80, 
+                  width: "auto",
+                  filter: "brightness(0) invert(1)", // Make logo white for dark background
+                  maxWidth: 250
+                }}
+              />
+            </div>
             <Text style={{ color: "#e0e7ff", fontSize: 14, display: "block", marginBottom: 16 }}>
               Creating an elevation for everyday ordinary people to see Jesus
             </Text>
