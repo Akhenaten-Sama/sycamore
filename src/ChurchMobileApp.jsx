@@ -23,8 +23,8 @@ import {
   BackTop,
   Drawer,
   Radio,
-  Checkbox
-} from "antd";
+  Checkbox,
+  Spin } from "antd";
 import {
   CalendarOutlined,
   UserOutlined,
@@ -52,8 +52,20 @@ import {
   FireOutlined,
   HeartFilled,
   CheckOutlined,
-  SendOutlined
-} from "@ant-design/icons";
+  SendOutlined,
+  LoginOutlined} from "@ant-design/icons";
+
+
+
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import AuthModal from './components/AuthModal';
+import MemberDashboard from './components/MemberDashboard';
+import Communities from './components/Communities';
+import MediaGallery from './components/MediaGallery';
+import Devotionals from './components/Devotionals';
+import Giving from './components/Giving';
+import ApiClient from './services/apiClient.js';
+
 
 const { Title, Paragraph, Text } = Typography;
 const { Meta } = Card;
@@ -214,28 +226,97 @@ function ChurchMobileApp() {
   const [selectedBlog, setSelectedBlog] = useState(null);
   const [prayerModal, setPrayerModal] = useState(false);
   const [menuDrawer, setMenuDrawer] = useState(false);
+  const [authModal, setAuthModal] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const { user, logout } = useAuth();
+
+  // Load events from API
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiClient.getEvents();
+      if (response && response.length > 0) {
+        setEvents(response);
+      } else {
+        // Fallback to mock data if API fails
+        setEvents(EVENTS_DATA);
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+      message.error('Failed to load events. Using offline data.');
+      setEvents(EVENTS_DATA);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load blog posts from API
+  const loadBlogPosts = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiClient.getBlogPosts();
+      if (response && response.length > 0) {
+        setBlogPosts(response);
+      } else {
+        // Fallback to mock data if API fails
+        setBlogPosts(BLOG_POSTS);
+      }
+    } catch (error) {
+      console.error('Failed to load blog posts:', error);
+      message.error('Failed to load blog posts. Using offline data.');
+      setBlogPosts(BLOG_POSTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadEvents();
+    loadBlogPosts();
+  }, []);
 
   const handleAttendance = async (values) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!user) {
+        message.warning('Please sign in to mark attendance');
+        setAuthModal(true);
+        return;
+      }
+      
+      // Call real API if user is authenticated
+      setLoading(true);
+      const response = await ApiClient.markAttendance(selectedEvent._id, values);
       message.success(`🙏 Attendance marked for ${selectedEvent.title}!`);
       setAttendanceModal(false);
       form.resetFields();
     } catch (error) {
       message.error("Failed to mark attendance. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePrayerRequest = async (values) => {
     try {
-      // Simulate API call
+      if (!user) {
+        message.warning('Please sign in to submit prayer requests');
+        setAuthModal(true);
+        return;
+      }
+
+      setLoading(true);
+      // Simulate API call for now - can be connected to real prayer API later
       await new Promise(resolve => setTimeout(resolve, 1000));
       message.success("🙏 Prayer request submitted successfully!");
       setPrayerModal(false);
     } catch (error) {
       message.error("Failed to submit prayer request. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -256,9 +337,72 @@ function ChurchMobileApp() {
     });
   };
 
+  const handleBlogLike = async (blogId) => {
+    if (!user) {
+      message.warning('Please sign in to like posts');
+      setAuthModal(true);
+      return;
+    }
+
+    try {
+      await ApiClient.likeBlogPost(blogId);
+      setBlogPosts(prev => prev.map(post => 
+        post.id === blogId 
+          ? { ...post, likes: (post.likes || 0) + 1, isLiked: true }
+          : post
+      ));
+    } catch (error) {
+      message.error('Failed to like post');
+    }
+  };
+
+  const openBlogModal = (post) => {
+    setSelectedBlog(post);
+    setBlogModal(true);
+  };
+
+  const shareBlog = (post) => {
+    if (navigator.share) {
+      navigator.share({
+        title: post.title,
+        text: post.excerpt,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      message.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleBlogComment = async (values) => {
+    if (!user) {
+      message.warning('Please sign in to comment');
+      setAuthModal(true);
+      return;
+    }
+
+    try {
+      const commentData = {
+        content: values.comment,
+        blogId: selectedBlog.id,
+        userId: user.id,
+      };
+
+      await ApiClient.addBlogComment(commentData);
+      message.success('Comment added successfully!');
+    } catch (error) {
+      message.error('Failed to add comment');
+    }
+  };
+
   const navigationItems = [
     { key: "events", icon: <CalendarOutlined />, label: "Events", color: "#52c41a" },
     { key: "blog", icon: <ReadOutlined />, label: "Blog", color: "#1890ff" },
+    { key: "dashboard", icon: <UserOutlined />, label: "My Dashboard", color: "#13c2c2", requiresAuth: true },
+    { key: "communities", icon: <TeamOutlined />, label: "Communities", color: "#722ed1" },
+    { key: "devotionals", icon: <BookOutlined />, label: "Devotionals", color: "#fa8c16" },
+    { key: "media", icon: <PictureOutlined />, label: "Media Gallery", color: "#eb2f96" },
+    { key: "giving", icon: <HeartOutlined />, label: "Give", color: "#f5222d", requiresAuth: true },
     { key: "archives", icon: <HistoryOutlined />, label: "Archives", color: "#722ed1" },
   ];
 
@@ -500,15 +644,28 @@ function ChurchMobileApp() {
         />
       }
       actions={[
-        <Space key="likes">
-          <HeartFilled style={{ color: "#ff4d4f" }} />
-          {post.likes}
-        </Space>,
-        <Space key="read">
-          <EyeOutlined />
-          Read
-        </Space>,
-        <ShareAltOutlined key="share" />
+        <Button 
+          type="text" 
+          key="likes"
+          icon={post.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+          onClick={() => handleBlogLike(post.id)}
+        >
+          {post.likes || 0}
+        </Button>,
+        <Button 
+          type="text" 
+          key="comments"
+          icon={<MessageOutlined />}
+          onClick={() => openBlogModal(post)}
+        >
+          {post.comments || 0}
+        </Button>,
+        <Button 
+          type="text" 
+          key="share"
+          icon={<ShareAltOutlined />}
+          onClick={() => shareBlog(post)}
+        />
       ]}
     >
       <div style={{ padding: "8px 0" }}>
@@ -593,6 +750,10 @@ function ChurchMobileApp() {
                 borderColor: activeTab === item.key ? item.color : "transparent"
               }}
               onClick={() => {
+                if (item.requiresAuth && !user) {
+                  setAuthModal(true);
+                  return;
+                }
                 setActiveTab(item.key);
                 setMenuDrawer(false);
               }}
@@ -667,13 +828,33 @@ function ChurchMobileApp() {
               style={{ color: "#fff", fontSize: 18 }}
               onClick={() => setMenuDrawer(true)}
             />
-            <Button
-              type="text"
-              size="large"
-              icon={<GlobalOutlined />}
-              style={{ color: "#fff", fontSize: 18 }}
-              onClick={openWebsite}
-            />
+            <div style={{ display: "flex", gap: 8 }}>
+              {user ? (
+                <Button
+                  type="text"
+                  size="large"
+                  onClick={logout}
+                  style={{ color: "#fff", fontSize: 14 }}
+                >
+                  <UserOutlined /> {user.firstName}
+                </Button>
+              ) : (
+                <Button
+                  type="text"
+                  size="large"
+                  icon={<LoginOutlined />}
+                  style={{ color: "#fff", fontSize: 18 }}
+                  onClick={() => setAuthModal(true)}
+                />
+              )}
+              <Button
+                type="text"
+                size="large"
+                icon={<GlobalOutlined />}
+                style={{ color: "#fff", fontSize: 18 }}
+                onClick={openWebsite}
+              />
+            </div>
           </div>
           
           <div style={{ textAlign: "center" }}>
@@ -708,7 +889,13 @@ function ChurchMobileApp() {
                       color: activeTab === item.key ? item.color : "#fff",
                       border: "1px solid rgba(255,255,255,0.3)"
                     }}
-                    onClick={() => setActiveTab(item.key)}
+                    onClick={() => {
+                      if (item.requiresAuth && !user) {
+                        setAuthModal(true);
+                        return;
+                      }
+                      setActiveTab(item.key);
+                    }}
                   >
                     {item.icon} {item.label}
                   </Button>
@@ -729,11 +916,18 @@ function ChurchMobileApp() {
                   <CalendarOutlined /> Upcoming Events
                 </Title>
                 <Row gutter={[16, 16]}>
-                  {EVENTS_DATA.map(event => (
-                    <Col xs={24} sm={12} lg={8} key={event.id}>
-                      <EventCard event={event} />
+                  {loading ? (
+                    <Col xs={24} style={{ textAlign: 'center', padding: '40px 0' }}>
+                      <Spin size="large" />
+                      <div style={{ marginTop: 16 }}>Loading events...</div>
                     </Col>
-                  ))}
+                  ) : (
+                    events.map(event => (
+                      <Col xs={24} sm={12} lg={8} key={event.id || event._id}>
+                        <EventCard event={event} />
+                      </Col>
+                    ))
+                  )}
                 </Row>
               </div>
             )}
@@ -744,11 +938,18 @@ function ChurchMobileApp() {
                   <ReadOutlined /> Latest Blog Posts
                 </Title>
                 <Row gutter={[16, 16]}>
-                  {BLOG_POSTS.map(post => (
-                    <Col xs={24} sm={12} lg={8} key={post.id}>
-                      <BlogCard post={post} />
+                  {loading ? (
+                    <Col xs={24} style={{ textAlign: 'center', padding: '40px 0' }}>
+                      <Spin size="large" />
+                      <div style={{ marginTop: 16 }}>Loading blog posts...</div>
                     </Col>
-                  ))}
+                  ) : (
+                    blogPosts.map(post => (
+                      <Col xs={24} sm={12} lg={8} key={post.id || post._id}>
+                        <BlogCard post={post} />
+                      </Col>
+                    ))
+                  )}
                 </Row>
               </div>
             )}
@@ -777,6 +978,26 @@ function ChurchMobileApp() {
                   ))}
                 </Row>
               </div>
+            )}
+
+            {activeTab === "dashboard" && (
+              <MemberDashboard user={user} />
+            )}
+
+            {activeTab === "communities" && (
+              <Communities user={user} />
+            )}
+
+            {activeTab === "devotionals" && (
+              <Devotionals user={user} />
+            )}
+
+            {activeTab === "media" && (
+              <MediaGallery user={user} />
+            )}
+
+            {activeTab === "giving" && (
+              <Giving user={user} />
             )}
           </Col>
         </Row>
@@ -944,6 +1165,91 @@ function ChurchMobileApp() {
         </div>
       </Modal>
 
+      {/* Blog Post Modal */}
+      <Modal
+        open={blogModal}
+        onCancel={() => setBlogModal(false)}
+        footer={null}
+        width="90%"
+        style={{ maxWidth: 700 }}
+        centered
+      >
+        {selectedBlog && (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <img 
+                src={selectedBlog.image} 
+                alt={selectedBlog.title}
+                style={{ width: '100%', maxHeight: 300, objectFit: 'cover', borderRadius: 8 }}
+              />
+            </div>
+
+            <Title level={2}>{selectedBlog.title}</Title>
+            
+            <Space wrap style={{ marginBottom: 16 }}>
+              <Tag color="blue">
+                <UserOutlined /> {selectedBlog.author}
+              </Tag>
+              <Tag color="green">
+                <CalendarOutlined /> {new Date(selectedBlog.publishedDate).toLocaleDateString()}
+              </Tag>
+              <Tag color="purple">
+                📖 {selectedBlog.readTime}
+              </Tag>
+              <Tag color="orange">
+                {selectedBlog.category}
+              </Tag>
+            </Space>
+
+            <Paragraph style={{ fontSize: 16, lineHeight: 1.8 }}>
+              {selectedBlog.content}
+            </Paragraph>
+
+            <Divider />
+
+            <Space wrap style={{ marginBottom: 16 }}>
+              <Button 
+                type="text" 
+                icon={selectedBlog.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+                onClick={() => handleBlogLike(selectedBlog.id)}
+              >
+                {selectedBlog.likes || 0} Likes
+              </Button>
+              <Button 
+                type="text" 
+                icon={<ShareAltOutlined />}
+                onClick={() => shareBlog(selectedBlog)}
+              >
+                Share
+              </Button>
+            </Space>
+
+            <Title level={4}>Comments</Title>
+
+            {user && (
+              <Form onFinish={(values) => handleBlogComment(values)} style={{ marginBottom: 16 }}>
+                <Form.Item name="comment" rules={[{ required: true, message: 'Please enter a comment' }]}>
+                  <Input.TextArea 
+                    placeholder="Write a comment..." 
+                    rows={2}
+                    autoSize={{ minRows: 2, maxRows: 4 }}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
+                    Post Comment
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+
+            <div style={{ marginTop: 16 }}>
+              <Text type="secondary">Comments will be available when connected to the backend API</Text>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* Prayer Request Modal */}
       <Modal
         title={
@@ -1006,9 +1312,24 @@ function ChurchMobileApp() {
           </Form>
         </div>
       </Modal>
+
+      {/* Authentication Modal */}
+      <AuthModal
+        visible={authModal}
+        onClose={() => setAuthModal(false)}
+      />
     </div>
   );
 }
 
-export default ChurchMobileApp;
+// Wrap the app with AuthProvider
+function App() {
+  return (
+    <AuthProvider>
+      <ChurchMobileApp />
+    </AuthProvider>
+  );
+}
+
+export default App;
 
