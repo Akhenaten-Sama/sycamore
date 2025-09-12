@@ -20,6 +20,9 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     // Save theme preference to localStorage
     localStorage.setItem('sycamore-theme', JSON.stringify(isDarkMode));
+    
+    // Apply theme data attribute to body for CSS styling
+    document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   const toggleTheme = () => {

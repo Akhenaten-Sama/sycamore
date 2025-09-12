@@ -30,27 +30,61 @@ const HomePage = () => {
   const { isDarkMode } = useTheme();
   const colors = getColors(isDarkMode);
 
-  const currentDate = new Date().toLocaleDateString('en-US', { 
+  const now = new Date();
+  const isSunday = now.getDay() === 0; // Sunday is day 0
+  
+  const currentDate = now.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
 
+  // Function to get appropriate greeting based on time and day
+  const getGreeting = () => {
+    if (isSunday && user) {
+      return `Welcome to church, ${user.firstName}! 🙏`;
+    } else if (user) {
+      const hour = now.getHours();
+      if (hour < 12) return `Good morning, ${user.firstName}`;
+      if (hour < 17) return `Good afternoon, ${user.firstName}`;
+      return `Good evening, ${user.firstName}`;
+    } else {
+      return isSunday ? 'Welcome to Sycamore Church! 🙏' : 'Welcome to Sycamore Church';
+    }
+  };
+
   return (
-    <div style={{ background: colors.background, minHeight: '100vh' }}>
+    <div style={{ 
+      background: colors.background, 
+      minHeight: '100vh',
+      width: '100%',
+      margin: 0,
+      padding: 0
+    }}>
       {/* Date and Greeting */}
       <div style={{ 
         padding: '20px 16px', 
-        background: `linear-gradient(135deg, ${colors.darkBlue} 0%, ${colors.teal} 100%)`,
+        background: isSunday 
+          ? `linear-gradient(135deg, ${colors.darkRed} 0%, ${colors.brightRed} 100%)`
+          : `linear-gradient(135deg, ${colors.darkBlue} 0%, ${colors.teal} 100%)`,
         color: colors.textWhite
       }}>
         <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>
           {currentDate}
         </Text>
         <Title level={3} style={{ color: colors.textWhite, margin: '4px 0 0 0' }}>
-          {user ? `Good afternoon, ${user.firstName}` : 'Welcome to Sycamore Church'}
+          {getGreeting()}
         </Title>
+        {isSunday && (
+          <Paragraph style={{ 
+            color: 'rgba(255, 255, 255, 0.9)', 
+            margin: '8px 0 0 0',
+            fontSize: '14px'
+          }}>
+            Join us for worship service today! 🎵
+          </Paragraph>
+        )}
       </div>
 
       {/* Main Action Buttons */}

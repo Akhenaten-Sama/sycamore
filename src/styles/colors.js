@@ -27,9 +27,9 @@ export const lightTheme = {
   info: '#94D2BD',          // Mint for info states
   
   // Background colors
-  background: '#FFFFFF',    // White background
-  cardBackground: '#FFFFFF', // White for cards
-  surfaceBackground: '#F8FAFB', // Light gray for surfaces
+  background: '#F8FAFB',    // Light gray background instead of white
+  cardBackground: '#FFFFFF', // White for cards to provide contrast
+  surfaceBackground: '#F0F4F6', // Slightly darker gray for surfaces
   
   // Text colors
   textPrimary: '#001219',   // Dark blue for primary text
@@ -61,9 +61,9 @@ export const darkTheme = {
   info: '#81C784',          // Light green for info
   
   // Background colors
-  background: '#121212',    // Dark background
-  cardBackground: '#1E1E1E', // Dark gray for cards
-  surfaceBackground: '#2D2D2D', // Darker gray for surfaces
+  background: '#0F1419',    // Very dark background
+  cardBackground: '#1A1F24', // Dark gray for cards
+  surfaceBackground: '#242A30', // Slightly lighter gray for surfaces
   
   // Text colors
   textPrimary: '#E8F4F8',   // Light text for primary

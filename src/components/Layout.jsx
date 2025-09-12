@@ -150,7 +150,15 @@ const Layout = ({ children }) => {
   return (
     <AntLayout style={{ 
       minHeight: '100vh', 
-      background: colors.background 
+      height: '100vh',
+      width: '100%',
+      maxWidth: '100vw',
+      margin: 0,
+      padding: 0,
+      background: colors.background,
+      position: 'relative',
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       {/* Mobile Header */}
       <Header style={{ 
@@ -162,7 +170,11 @@ const Layout = ({ children }) => {
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        boxShadow: `0 2px 12px rgba(0, 0, 0, 0.1)`
+        boxShadow: `0 2px 12px rgba(0, 0, 0, 0.1)`,
+        width: '100%',
+        maxWidth: '100vw',
+        margin: 0,
+        boxSizing: 'border-box'
       }}>
         {/* App Title */}
         <div style={{ 
@@ -245,8 +257,14 @@ const Layout = ({ children }) => {
       {/* Main Content */}
       <Content style={{ 
         flex: 1,
+        width: '100%',
         background: colors.background,
-        paddingBottom: '80px' // Space for bottom navigation
+        paddingBottom: '80px', // Space for bottom navigation
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        height: 'calc(100vh - 64px)', // Full height minus header
+        margin: 0,
+        padding: '0 0 80px 0'
       }}>
         {children}
       </Content>

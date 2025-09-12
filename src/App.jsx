@@ -55,11 +55,21 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </ErrorBoundary>
+    <div style={{ 
+      width: '100%', 
+      maxWidth: '100vw',
+      height: '100vh', 
+      margin: 0, 
+      padding: 0,
+      overflow: 'hidden',
+      boxSizing: 'border-box'
+    }}>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </ErrorBoundary>
+    </div>
   );
 };
 
