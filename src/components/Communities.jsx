@@ -29,9 +29,11 @@ import {
   EnvironmentOutlined,
   ClockCircleOutlined,
   EyeOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import ApiClient from '../services/apiClient';
+import CommunityManagement from './CommunityManagement';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -44,6 +46,8 @@ const Communities = ({ user }) => {
   const [joinModal, setJoinModal] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [createModal, setCreateModal] = useState(false);
+  const [managementModal, setManagementModal] = useState(false);
+  const [managementCommunity, setManagementCommunity] = useState(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -103,7 +107,7 @@ const Communities = ({ user }) => {
     }
   };
 
-  const handleJoinCommunity = async (communityId) => {
+  const handleJoinCommunity = async (communityId, community) => {
     if (!user) {
       message.warning('Please sign in to join communities');
       return;
@@ -111,14 +115,41 @@ const Communities = ({ user }) => {
 
     try {
       const memberIdToUse = user.memberId || user.id;
-      await ApiClient.joinCommunity(communityId, memberIdToUse);
-      message.success('Successfully joined the community!');
+      
+      // Check if community requires approval
+      if (community.isPrivate && !community.canJoin) {
+        // Send join request
+        await ApiClient.requestJoinCommunity(communityId);
+        message.success('Join request sent! The community leader will review your request.');
+      } else {
+        // Direct join
+        await ApiClient.joinCommunity(communityId, memberIdToUse);
+        message.success('Successfully joined the community!');
+      }
+      
       loadCommunities();
       loadMyCommunities();
       setJoinModal(false);
     } catch (error) {
-      message.error('Failed to join community. Please try again.');
+      console.error('Join community error:', error);
+      message.error(error.message || 'Failed to join community. Please try again.');
     }
+  };
+
+  const handleCancelJoinRequest = async (communityId) => {
+    try {
+      await ApiClient.cancelJoinRequest(communityId);
+      message.success('Join request cancelled');
+      loadCommunities();
+    } catch (error) {
+      console.error('Cancel join request error:', error);
+      message.error('Failed to cancel join request');
+    }
+  };
+
+  const openManagement = (community) => {
+    setManagementCommunity(community);
+    setManagementModal(true);
   };
 
   const handleCreateCommunity = async (values) => {
@@ -136,6 +167,56 @@ const Communities = ({ user }) => {
   const CommunityCard = ({ community, showJoinButton = true }) => {
     // Check if community is joined either from myCommunities array or from community.isJoined property
     const isJoined = community.isJoined || myCommunities.some(c => c.id === community.id || c._id === community._id);
+    const isInvited = community.isInvited;
+    const hasJoinRequest = community.hasJoinRequest;
+    const canJoin = community.canJoin !== false; // Default to true if not specified
+    
+    const getJoinButtonProps = () => {
+      if (isJoined) {
+        return {
+          type: "default",
+          icon: <MessageOutlined />,
+          children: 'View',
+          onClick: () => viewCommunity(community)
+        };
+      }
+      
+      if (hasJoinRequest) {
+        return {
+          type: "default",
+          icon: <ClockCircleOutlined />,
+          children: 'Cancel Request',
+          onClick: () => handleCancelJoinRequest(community.id),
+          style: { backgroundColor: '#faad14', borderColor: '#faad14', color: 'white' }
+        };
+      }
+      
+      if (isInvited) {
+        return {
+          type: "primary",
+          icon: <PlusOutlined />,
+          children: 'Accept Invitation',
+          onClick: () => handleJoinCommunity(community.id, community),
+          style: { backgroundColor: '#52c41a', borderColor: '#52c41a' }
+        };
+      }
+      
+      if (!canJoin && community.isPrivate) {
+        return {
+          type: "default",
+          icon: <MessageOutlined />,
+          children: 'Request to Join',
+          onClick: () => handleJoinCommunity(community.id, community)
+        };
+      }
+      
+      return {
+        type: "primary",
+        icon: <PlusOutlined />,
+        children: 'Join',
+        onClick: () => handleJoinCommunity(community.id, community)
+      };
+    };
     
     return (
       <Card
@@ -157,13 +238,18 @@ const Communities = ({ user }) => {
         }
         actions={showJoinButton ? [
           <Button 
-            type={isJoined ? "default" : "primary"}
-            icon={isJoined ? <MessageOutlined /> : <PlusOutlined />}
-            onClick={() => isJoined ? viewCommunity(community) : handleJoinCommunity(community.id)}
+            {...getJoinButtonProps()}
             disabled={!user}
-          >
-            {isJoined ? 'View' : 'Join'}
-          </Button>
+          />,
+          ...(community.isLeader ? [
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => openManagement(community)}
+              title="Manage Community"
+            >
+              Manage
+            </Button>
+          ] : [])
         ] : [
           <Button 
             type="primary"
@@ -175,7 +261,22 @@ const Communities = ({ user }) => {
         ]}
       >
         <Card.Meta
-          title={community.name}
+          title={
+            <Space>
+              {community.name}
+              {community.isPrivate && (
+                <Tag color="orange" size="small">
+                  {community.inviteOnly ? 'Invite Only' : 'Private'}
+                </Tag>
+              )}
+              {isInvited && (
+                <Tag color="green" size="small">Invited</Tag>
+              )}
+              {hasJoinRequest && (
+                <Tag color="gold" size="small">Request Pending</Tag>
+              )}
+            </Space>
+          }
           description={
             <div>
               <Paragraph ellipsis={{ rows: 2 }}>
@@ -186,8 +287,13 @@ const Communities = ({ user }) => {
                   <UserOutlined /> {community.memberCount || 0} members
                 </Tag>
                 <Tag color="green">
-                  <EnvironmentOutlined /> {community.category}
+                  <EnvironmentOutlined /> {community.category || community.type}
                 </Tag>
+                {community.pendingJoinRequests > 0 && community.isLeader && (
+                  <Tag color="orange">
+                    <ClockCircleOutlined /> {community.pendingJoinRequests} pending requests
+                  </Tag>
+                )}
               </Space>
             </div>
           }
@@ -207,7 +313,7 @@ const Communities = ({ user }) => {
         <Paragraph type="secondary">
           Join communities to connect with fellow believers and grow together
         </Paragraph>
-        {user && (
+        {/* {user && (
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
@@ -215,7 +321,7 @@ const Communities = ({ user }) => {
           >
             Create Community
           </Button>
-        )}
+        )} */}
       </div>
 
       {loading ? (
@@ -358,6 +464,14 @@ const Communities = ({ user }) => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Community Management Modal */}
+      <CommunityManagement
+        visible={managementModal}
+        onClose={() => setManagementModal(false)}
+        communityId={managementCommunity?.id}
+        communityName={managementCommunity?.name}
+      />
     </div>
   );
 };

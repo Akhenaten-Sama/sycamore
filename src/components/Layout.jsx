@@ -99,6 +99,7 @@ const Layout = ({ children }) => {
       // Show more options
       const moreItems = [
         { path: '/events', label: 'Events', icon: <CalendarOutlined /> },
+        { path: '/watch-live', label: 'Watch Live', icon: <PlayCircleOutlined /> },
         { path: '/blog', label: 'Blog', icon: <FileTextOutlined /> },
         { path: '/devotionals', label: 'Devotionals', icon: <CompassOutlined /> },
         { path: '/requests', label: 'Request Forms', icon: <FormOutlined /> },

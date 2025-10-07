@@ -22,16 +22,19 @@ const EventsPage = () => {
       const response = await ApiClient.getEvents();
       console.log('Events response:', response);
       
-      if (response?.data) {
-        setEvents(Array.isArray(response.data) ? response.data : []);
+      if (response && Array.isArray(response)) {
+        setEvents(response);
+      } else if (response && response.events && Array.isArray(response.events)) {
+        // Handle case where events are nested under events property
+        setEvents(response.events);
       } else {
-        // Fallback to mock data
-        setEvents(MOCK_EVENTS);
+        console.warn('No valid events data received, using empty array');
+        setEvents([]);
       }
     } catch (error) {
       console.error('Failed to load events:', error);
-      // Fallback to mock data
-      setEvents(MOCK_EVENTS);
+      // Set empty array instead of mock data to force real backend usage
+      setEvents([]);
     } finally {
       setLoading(false);
     }

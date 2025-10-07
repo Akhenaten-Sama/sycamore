@@ -5,19 +5,35 @@ import {
   UserOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
-  TeamOutlined
+  TeamOutlined,
+  CheckOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getColors } from '../styles/colors';
+import AttendanceManager from '../components/AttendanceManager';
 
 const { Title, Paragraph, Text } = Typography;
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [screenSize, setScreenSize] = useState('mobile');
+  const [attendanceModalVisible, setAttendanceModalVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
   const colors = getColors(isDarkMode);
 
   useEffect(() => {
@@ -37,30 +53,61 @@ const EventsPage = () => {
     loadEvents();
   }, []);
 
-  const loadEvents = async () => {
+  const loadEvents = async (page = 1, append = false) => {
     try {
-      setLoading(true);
-      const response = await ApiClient.getEvents();
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      
+      const response = await ApiClient.getEvents('upcoming', page);
       console.log('Events response:', response);
       
-      if (response?.data) {
-        setEvents(Array.isArray(response.data) ? response.data : []);
+      if (response && Array.isArray(response)) {
+        if (append) {
+          setEvents(prevEvents => [...prevEvents, ...response]);
+        } else {
+          setEvents(response);
+        }
+        
+        // If response has pagination metadata, update it
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
+      } else if (response && response.events && Array.isArray(response.events)) {
+        // Handle case where events are nested under events property
+        if (append) {
+          setEvents(prevEvents => [...prevEvents, ...response.events]);
+        } else {
+          setEvents(response.events);
+        }
+        
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
       } else {
-        // Fallback to mock data
-        setEvents(MOCK_EVENTS);
+        console.warn('No valid events data received, using empty array');
+        if (!append) {
+          setEvents([]);
+        }
       }
     } catch (error) {
       console.error('Failed to load events:', error);
-      // Fallback to mock data
-      setEvents(MOCK_EVENTS);
+      // Set empty array instead of mock data to force real backend usage
+      if (!append) {
+        setEvents([]);
+      }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const MOCK_EVENTS = [
     {
       id: 1,
+      name: "Sunday Worship Service",
       title: "Sunday Worship Service",
       description: "Join us for our weekly worship service filled with praise, worship, and powerful preaching.",
       date: "2025-09-15",
@@ -72,6 +119,7 @@ const EventsPage = () => {
     },
     {
       id: 2,
+      name: "Youth Fellowship",
       title: "Youth Fellowship",
       description: "An exciting time of fellowship, games, and spiritual growth for our young people.",
       date: "2025-09-18",
@@ -83,6 +131,7 @@ const EventsPage = () => {
     },
     {
       id: 3,
+      name: "Bible Study",
       title: "Bible Study",
       description: "Deep dive into God's word with our midweek Bible study session.",
       date: "2025-09-19",
@@ -94,6 +143,7 @@ const EventsPage = () => {
     },
     {
       id: 4,
+      name: "Community Outreach",
       title: "Community Outreach",
       description: "Join us as we serve our local community with food distribution and prayer.",
       date: "2025-09-21",
@@ -104,6 +154,11 @@ const EventsPage = () => {
       category: "Outreach"
     }
   ];
+
+  const handleMarkAttendance = (event) => {
+    setSelectedEvent(event);
+    setAttendanceModalVisible(true);
+  };
 
   const EventCard = ({ event }) => {
     const isDesktop = screenSize === 'desktop';
@@ -179,17 +234,36 @@ const EventsPage = () => {
                       {event.attendees} attending
                     </Text>
                   </Space>
-                  <Button 
-                    type="primary" 
-                    size="large"
-                    style={{ 
-                      borderRadius: '20px',
-                      backgroundColor: colors.success,
-                      borderColor: colors.success
-                    }}
-                  >
-                    Learn More
-                  </Button>
+                  <Space>
+                    {user && (
+                      <Button 
+                        type="primary" 
+                        size="large"
+                        onClick={() => handleMarkAttendance(event)}
+                        icon={<CheckOutlined />}
+                        style={{ 
+                          borderRadius: '20px',
+                          backgroundColor: colors.primary,
+                          borderColor: colors.primary
+                        }}
+                      >
+                        Check In
+                      </Button>
+                    )}
+                    <Button 
+                      type="default" 
+                      size="large"
+                      icon={<EyeOutlined />}
+                      style={{ 
+                        borderRadius: '20px',
+                        backgroundColor: colors.success,
+                        borderColor: colors.success,
+                        color: colors.textWhite
+                      }}
+                    >
+                      Learn More
+                    </Button>
+                  </Space>
                 </div>
               </div>
             </Col>
@@ -261,17 +335,36 @@ const EventsPage = () => {
                   </Text>
                 </Space>
                 
-                <Button 
-                  type="primary" 
-                  size="small"
-                  style={{ 
-                    borderRadius: '20px',
-                    backgroundColor: colors.success,
-                    borderColor: colors.success
-                  }}
-                >
-                  Learn More
-                </Button>
+                <Space>
+                  {user && (
+                    <Button 
+                      type="primary" 
+                      size="small"
+                      onClick={() => handleMarkAttendance(event)}
+                      icon={<CheckOutlined />}
+                      style={{ 
+                        borderRadius: '20px',
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary
+                      }}
+                    >
+                      Check In
+                    </Button>
+                  )}
+                  <Button 
+                    type="default" 
+                    size="small"
+                    icon={<EyeOutlined />}
+                    style={{ 
+                      borderRadius: '20px',
+                      backgroundColor: colors.success,
+                      borderColor: colors.success,
+                      color: colors.textWhite
+                    }}
+                  >
+                    Learn More
+                  </Button>
+                </Space>
               </div>
             </div>
           </>
@@ -328,12 +421,48 @@ const EventsPage = () => {
           {events.map(event => (
             <EventCard key={event.id} event={event} />
           ))}
+          
+          {/* Load More Button */}
+          {pagination.hasNextPage && (
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              <Button 
+                onClick={() => loadEvents(pagination.page + 1, true)}
+                loading={loadingMore}
+                style={{
+                  backgroundColor: colors.primary,
+                  borderColor: colors.primary,
+                  color: 'white'
+                }}
+              >
+                {loadingMore ? 'Loading...' : 'Load More Events'}
+              </Button>
+            </div>
+          )}
+          
+          {/* Pagination Info */}
+          {events.length > 0 && (
+            <div style={{ 
+              textAlign: 'center', 
+              margin: '10px 0',
+              color: colors.textSecondary,
+              fontSize: '14px'
+            }}>
+              Showing {events.length} of {pagination.total} events
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
           <Empty description="No events found" style={{ color: colors.textSecondary }} />
         </div>
       )}
+
+      {/* Attendance Manager Modal */}
+      <AttendanceManager
+        visible={attendanceModalVisible}
+        onClose={() => setAttendanceModalVisible(false)}
+        event={selectedEvent}
+      />
     </div>
   );
 };

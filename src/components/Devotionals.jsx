@@ -134,12 +134,20 @@ const Devotionals = ({ user }) => {
       return;
     }
 
+    if (!selectedDevotional || !selectedDevotional.id) {
+      message.error('No devotional selected. Please try again.');
+      console.error('selectedDevotional:', selectedDevotional);
+      return;
+    }
+
     try {
       const commentData = {
         content: values.comment,
         devotionalId: selectedDevotional.id,
         userId: user.memberId || user.id,
       };
+
+      console.log('Sending comment data:', commentData);
 
       const response = await ApiClient.addDevotionalComment(commentData);
       

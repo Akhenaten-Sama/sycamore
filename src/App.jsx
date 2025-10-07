@@ -18,6 +18,7 @@ import CommunityDetailsPage from './pages/CommunityDetailsPage';
 import SermonNotesPage from './pages/SermonNotesPage';
 import BiblePage from './pages/BiblePage';
 import RequestFormsPage from './pages/RequestFormsPage';
+import WatchLivePage from './pages/WatchLivePage';
 import { getAntdTheme } from './styles/colors';
 
 const AppContent = () => {
@@ -43,6 +44,7 @@ const AppContent = () => {
                 <Route path="/sermon-notes" element={<SermonNotesPage />} />
                 <Route path="/bible" element={<BiblePage />} />
                 <Route path="/requests" element={<RequestFormsPage />} />
+                <Route path="/watch-live" element={<WatchLivePage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>

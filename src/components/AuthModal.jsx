@@ -119,6 +119,23 @@ const AuthModal = ({ visible, onClose }) => {
     >
       <Space direction="horizontal" style={{ width: '100%' }}>
         <Form.Item
+          name="title"
+          label="Title"
+          style={{ flex: 0.3 }}
+          rules={[{ required: true, message: 'Please select title' }]}
+        >
+          <Select placeholder="Title">
+            <Option value="Mr">Mr</Option>
+            <Option value="Mrs">Mrs</Option>
+            <Option value="Miss">Miss</Option>
+            <Option value="Dr">Dr</Option>
+            <Option value="Prof">Prof</Option>
+            <Option value="Rev">Rev</Option>
+            <Option value="Pastor">Pastor</Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
           name="firstName"
           label="First Name"
           style={{ flex: 1 }}
@@ -187,6 +204,32 @@ const AuthModal = ({ visible, onClose }) => {
           <Option value="single">Single</Option>
           <Option value="married">Married</Option>
           <Option value="divorced">Divorced</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="yearsAttending"
+        label="When did you start attending SYC?"
+        rules={[{ required: true, message: 'Please select when you started attending' }]}
+      >
+        <Select placeholder="Select when you started attending">
+          <Option value="first_timer">I am a first timer</Option>
+          <Option value="not_attending">I do not attend Sycamore</Option>
+          {Array.from({ length: new Date().getFullYear() - 2013 }, (_, i) => {
+            const year = 2014 + i;
+            return <Option key={year} value={year.toString()}>{year}</Option>;
+          })}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="location"
+        label="Location"
+        rules={[{ required: true, message: 'Please select your location' }]}
+      >
+        <Select placeholder="Select your location">
+          <Option value="lagos">Lagos</Option>
+          <Option value="ibadan">Ibadan</Option>
         </Select>
       </Form.Item>
 

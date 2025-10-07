@@ -70,8 +70,8 @@ class ApiClient {
     return this.request('/mobile/journey');
   }
 
-  async getEvents(type = 'upcoming') {
-    return this.request(`/mobile/events?type=${type}`);
+  async getEvents(type = 'upcoming', page = 1, limit = 20) {
+    return this.request(`/mobile/events?type=${type}&page=${page}&limit=${limit}`);
   }
 
   async checkInToEvent(eventId) {
@@ -140,6 +140,153 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(communityData)
     });
+  }
+
+  async getCommunityDetails(communityId) {
+    return this.request(`/mobile/communities/${communityId}`);
+  }
+
+  async createCommunityPost(communityId, postData) {
+    return this.request(`/mobile/communities/${communityId}/posts`, {
+      method: 'POST',
+      body: JSON.stringify(postData)
+    });
+  }
+
+  async addCommunityPostComment(postId, commentData) {
+    return this.request(`/mobile/communities/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(commentData)
+    });
+  }
+
+  async likeCommunityPost(postId, userId) {
+    return this.request(`/mobile/communities/posts/${postId}/like`, {
+      method: 'POST',
+      body: JSON.stringify({ userId })
+    });
+  }
+
+  // Children/Ward management
+  async getChildren(parentId) {
+    return this.request(`/mobile/children?parentId=${parentId}`);
+  }
+
+  async addChild(childData) {
+    return this.request('/mobile/children', {
+      method: 'POST',
+      body: JSON.stringify(childData)
+    });
+  }
+
+  // Self-attendance management
+  async markAttendance(eventId, userId, childrenIds = []) {
+    return this.request('/mobile/attendance/mark', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        eventId, 
+        userId,
+        childrenIds 
+      })
+    });
+  }
+
+  async getMyAttendance(userId, eventId = null) {
+    const params = new URLSearchParams({ userId });
+    if (eventId) params.append('eventId', eventId);
+    return this.request(`/mobile/attendance/my?${params}`);
+  }
+
+  // Sermon Challenge endpoints
+  async submitSermonChallenge(submissionData) {
+    return this.request('/mobile/sermon-challenges/submit', {
+      method: 'POST',
+      body: JSON.stringify(submissionData)
+    });
+  }
+
+  async getSermonChallenges(eventId) {
+    return this.request(`/mobile/sermon-challenges/${eventId}`);
+  }
+
+  // Community management endpoints
+  async inviteMemberToCommunity(communityId, memberId) {
+    return this.request(`/mobile/communities/${communityId}/manage`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'invite-member',
+        memberId
+      })
+    });
+  }
+
+  async inviteMultipleMembersToCommunity(communityId, memberIds) {
+    return this.request(`/mobile/communities/${communityId}/manage`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'invite-member',
+        memberIds
+      })
+    });
+  }
+
+  async approveJoinRequest(communityId, memberId) {
+    return this.request(`/mobile/communities/${communityId}/manage`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'approve-request',
+        memberId
+      })
+    });
+  }
+
+  async rejectJoinRequest(communityId, memberId) {
+    return this.request(`/mobile/communities/${communityId}/manage`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'reject-request',
+        memberId
+      })
+    });
+  }
+
+  async removeInvitation(communityId, memberId) {
+    return this.request(`/mobile/communities/${communityId}/manage`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'remove-invitation',
+        memberId
+      })
+    });
+  }
+
+  async getCommunityManagementData(communityId) {
+    return this.request(`/mobile/communities/${communityId}/manage`);
+  }
+
+  async requestJoinCommunity(communityId) {
+    return this.request('/mobile/communities', {
+      method: 'POST',
+      body: JSON.stringify({
+        communityId,
+        action: 'request-join'
+      })
+    });
+  }
+
+  async cancelJoinRequest(communityId) {
+    return this.request('/mobile/communities', {
+      method: 'POST',
+      body: JSON.stringify({
+        communityId,
+        action: 'cancel-request'
+      })
+    });
+  }
+
+  async searchMembers(query) {
+    const params = new URLSearchParams({ q: query });
+    return this.request(`/mobile/members/search?${params}`);
   }
 
   // Media endpoints

@@ -210,7 +210,7 @@ const MemberDashboard = ({ user }) => {
   );
 
   const JourneySection = () => (
-    <Card title={<><TrophyOutlined /> My Faith Journey</> }>
+    <Card title={<><TrophyOutlined /> My Sycamore Journey</> }>
       {memberJourney.length > 0 ? (
         <Timeline>
           {memberJourney.map((milestone, index) => (
@@ -233,7 +233,7 @@ const MemberDashboard = ({ user }) => {
         </Timeline>
       ) : (
         <Empty 
-          description="Your faith journey will be tracked here as you participate in church activities"
+          description="Your Sycamore journey will be tracked here as you participate in church activities"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       )}
@@ -344,7 +344,7 @@ const MemberDashboard = ({ user }) => {
     },
     {
       key: 'journey',
-      label: 'Faith Journey',
+      label: 'Sycamore Journey',
       children: <JourneySection />,
     },
     {
