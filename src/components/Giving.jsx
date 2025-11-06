@@ -45,7 +45,30 @@ const Giving = ({ user }) => {
   const [givingHistory, setGivingHistory] = useState([]);
   const [givingStats, setGivingStats] = useState({});
   const [form] = Form.useForm();
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [currency, setCurrency] = useState('NGN');
+
+  // Paystack configuration
+  const PAYSTACK_PUBLIC_KEY = 'pk_test_847967189b962acc11e39b8ed4b1d11ecafe0cb3';
+
+  // Currency configurations
+  const currencies = {
+    NGN: { symbol: '₦', name: 'Nigerian Naira', paystack: true },
+    USD: { symbol: '$', name: 'US Dollar', paystack: true },
+    EUR: { symbol: '€', name: 'Euro', paystack: false },
+    GBP: { symbol: '£', name: 'British Pound', paystack: false },
+    CAD: { symbol: 'C$', name: 'Canadian Dollar', paystack: false },
+    GHS: { symbol: 'GH₵', name: 'Ghana Cedi', paystack: true },
+    ZAR: { symbol: 'R', name: 'South African Rand', paystack: true },
+    KES: { symbol: 'KSh', name: 'Kenyan Shilling', paystack: true }
+  };
+
+  const getCurrencySymbol = (currencyCode) => {
+    return currencies[currencyCode]?.symbol || '$';
+  };
+
+  const isPaystackSupported = (currencyCode) => {
+    return currencies[currencyCode]?.paystack || false;
+  };
 
   useEffect(() => {
     if (user) {
@@ -54,24 +77,83 @@ const Giving = ({ user }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Load Paystack script
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   const loadGivingHistory = async () => {
     try {
       const response = await ApiClient.getGivingHistory(user.memberId || user.id);
-      setGivingHistory(response || mockGivingHistory);
+      
+      // ApiClient already extracts the data part from { success: true, data: [...] }
+      if (response && Array.isArray(response)) {
+        setGivingHistory(response);
+      } else {
+        setGivingHistory([]);
+      }
     } catch (error) {
       console.error('Failed to load giving history:', error);
-      setGivingHistory(mockGivingHistory);
+      setGivingHistory([]);
     }
   };
 
   const loadGivingStats = async () => {
     try {
       const response = await ApiClient.getGivingStats(user.memberId || user.id);
-      setGivingStats(response || mockGivingStats);
+      
+      // ApiClient already extracts the data part from { success: true, data: {...} }
+      if (response && (response.totalGiving !== undefined || response.yearlyGiving !== undefined)) {
+        setGivingStats({
+          yearlyTotal: response.yearlyGiving || 0,
+          monthlyTotal: response.monthlyBreakdown?.reduce((sum, month) => {
+            const currentMonth = new Date().getMonth() + 1;
+            return month.month === currentMonth ? sum + month.total : sum;
+          }, 0) || 0,
+          totalDonations: response.totalDonations || 0,
+          givingStreak: 0 // This needs to be calculated separately
+        });
+      } else {
+        setGivingStats({
+          yearlyTotal: 0,
+          monthlyTotal: 0,
+          totalDonations: 0,
+          givingStreak: 0
+        });
+      }
     } catch (error) {
       console.error('Failed to load giving stats:', error);
-      setGivingStats(mockGivingStats);
+      setGivingStats({
+        yearlyTotal: 0,
+        monthlyTotal: 0,
+        totalDonations: 0,
+        givingStreak: 0
+      });
     }
+  };
+
+  const handlePaystackPayment = (amount, email, currency, onSuccess, onClose) => {
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: email,
+      amount: amount * 100, // Convert to kobo/cents
+      currency: currency,
+      callback: function(response) {
+        onSuccess(response);
+      },
+      onClose: function() {
+        onClose();
+      }
+    });
+    
+    handler.openIframe();
   };
 
   const handleDonation = async (values) => {
@@ -80,24 +162,62 @@ const Giving = ({ user }) => {
       return;
     }
 
+    // Check if Paystack supports the selected currency
+    if (!isPaystackSupported(currency)) {
+      message.error(`Sorry, Paystack doesn't support ${currency}. Please select NGN, USD, GHS, ZAR, or KES for online payments.`);
+      return;
+    }
+
     try {
       setLoading(true);
+      
       const donationData = {
         ...values,
         userId: user.memberId || user.id,
-        paymentMethod,
+        currency,
         timestamp: new Date().toISOString(),
       };
 
-      await ApiClient.processDonation(donationData);
-      
-      message.success('🙏 Thank you for your generous donation!');
-      form.resetFields();
-      setDonationModal(false);
-      loadGivingHistory();
-      loadGivingStats();
+      // Process payment with Paystack
+      await new Promise((resolve, reject) => {
+        handlePaystackPayment(
+          values.amount,
+          user.email,
+          currency,
+          async (response) => {
+            try {
+              // Send donation data to backend with Paystack reference
+              const donationWithPayment = {
+                ...donationData,
+                paymentReference: response.reference,
+                method: 'paystack',
+                status: 'completed'
+              };
+
+              const result = await ApiClient.processDonation(donationWithPayment);
+              
+              message.success('🙏 Thank you for your generous donation!');
+              form.resetFields();
+              loadGivingHistory();
+              loadGivingStats();
+              setDonationModal(false); // Ensure modal closes
+              resolve();
+            } catch (error) {
+              console.error('Error processing donation:', error);
+              message.error('Failed to process donation. Please contact support.');
+              reject(error);
+            }
+          },
+          () => {
+            message.info('Payment cancelled');
+            reject(new Error('Payment cancelled'));
+          }
+        );
+      });
     } catch (error) {
-      message.error('Failed to process donation. Please try again.');
+      if (error.message !== 'Payment cancelled') {
+        message.error('Failed to process payment. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -120,7 +240,7 @@ const Giving = ({ user }) => {
           <Statistic
             title="This Year"
             value={givingStats.yearlyTotal || 0}
-            prefix="$"
+            prefix={getCurrencySymbol(currency)}
             precision={2}
             valueStyle={{ color: '#1890ff', fontSize: 18 }}
           />
@@ -131,7 +251,7 @@ const Giving = ({ user }) => {
           <Statistic
             title="This Month"
             value={givingStats.monthlyTotal || 0}
-            prefix="$"
+            prefix={getCurrencySymbol(currency)}
             precision={2}
             valueStyle={{ color: '#52c41a', fontSize: 18 }}
           />
@@ -210,7 +330,9 @@ const Giving = ({ user }) => {
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>{getCategoryLabel(donation.category)}</span>
-                    <Text strong>${donation.amount.toFixed(2)}</Text>
+                    <Text strong>
+                      {getCurrencySymbol(donation.currency)}{donation.amount.toFixed(2)} {donation.currency}
+                    </Text>
                   </div>
                 }
                 description={
@@ -220,10 +342,10 @@ const Giving = ({ user }) => {
                         {new Date(donation.date).toLocaleDateString()}
                       </Tag>
                       <Tag icon={<CreditCardOutlined />}>
-                        {donation.paymentMethod}
+                        {donation.method || donation.paymentMethod}
                       </Tag>
                       <Tag color="green" icon={<CheckOutlined />}>
-                        Completed
+                        {donation.status || 'Completed'}
                       </Tag>
                     </Space>
                     {donation.note && (
@@ -343,72 +465,44 @@ const Giving = ({ user }) => {
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="amount"
-            label="Amount ($)"
-            rules={[
-              { required: true, message: 'Please enter amount' },
-              { type: 'number', min: 1, message: 'Amount must be at least $1' }
-            ]}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              prefix="$"
-              placeholder="0.00"
-              step={0.01}
-              min={1}
-            />
-          </Form.Item>
-
-          <Form.Item label="Payment Method">
-            <Radio.Group 
-              value={paymentMethod} 
-              onChange={e => setPaymentMethod(e.target.value)}
-              style={{ width: '100%' }}
-            >
-              <Radio.Button value="card" style={{ width: '33.33%', textAlign: 'center' }}>
-                <CreditCardOutlined /> Card
-              </Radio.Button>
-              <Radio.Button value="bank" style={{ width: '33.33%', textAlign: 'center' }}>
-                <BankOutlined /> Bank
-              </Radio.Button>
-              <Radio.Button value="mobile" style={{ width: '33.33%', textAlign: 'center' }}>
-                <MobileOutlined /> Mobile
-              </Radio.Button>
-            </Radio.Group>
-          </Form.Item>
-
-          {paymentMethod === 'card' && (
-            <>
+          <Row gutter={16}>
+            <Col span={16}>
               <Form.Item
-                name="cardNumber"
-                label="Card Number"
-                rules={[{ required: true, message: 'Please enter card number' }]}
+                name="amount"
+                label={`Amount (${currency})`}
+                rules={[
+                  { required: true, message: 'Please enter amount' },
+                  { type: 'number', min: 1, message: 'Amount must be at least 1' }
+                ]}
               >
-                <Input placeholder="1234 5678 9012 3456" />
+                <InputNumber
+                  style={{ width: '100%' }}
+                  prefix={getCurrencySymbol(currency)}
+                  placeholder="0.00"
+                  step={0.01}
+                  min={1}
+                />
               </Form.Item>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="expiryDate"
-                    label="Expiry Date"
-                    rules={[{ required: true, message: 'Please enter expiry date' }]}
-                  >
-                    <Input placeholder="MM/YY" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="cvv"
-                    label="CVV"
-                    rules={[{ required: true, message: 'Please enter CVV' }]}
-                  >
-                    <Input placeholder="123" />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </>
-          )}
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Currency">
+                <Select 
+                  value={currency} 
+                  onChange={setCurrency}
+                  placeholder="Select currency"
+                >
+                  {Object.entries(currencies).map(([code, info]) => (
+                    <Option key={code} value={code}>
+                      {info.symbol} {code} {info.paystack ? '💳' : '🏦'}
+                    </Option>
+                  ))}
+                </Select>
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                  💳 = Paystack supported, 🏦 = Contact church for other payment methods
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             name="note"
@@ -421,8 +515,8 @@ const Giving = ({ user }) => {
           </Form.Item>
 
           <Alert
-            message="Secure Payment"
-            description="Your payment information is encrypted and secure. You will receive an email confirmation after your donation is processed."
+            message="Secure Payment via Paystack"
+            description="Your payment will be processed securely via Paystack. You will receive an email confirmation after your donation is processed."
             type="success"
             showIcon
             style={{ marginBottom: 16 }}
@@ -434,7 +528,7 @@ const Giving = ({ user }) => {
                 Cancel
               </Button>
               <Button type="primary" htmlType="submit" loading={loading} size="large">
-                Donate Now 🙏
+                Donate with Paystack 🙏
               </Button>
             </Space>
           </Form.Item>

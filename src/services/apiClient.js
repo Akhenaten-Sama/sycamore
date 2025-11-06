@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL =  'https://admin.sycamore.church/api';
+const API_BASE_URL =  'http://localhost:3000/api';
 
 class ApiClient {
   constructor() {
@@ -357,11 +357,11 @@ class ApiClient {
 
   // Giving endpoints
   async getGivingHistory(userId) {
-    return this.request(`/mobile/members/${userId}/giving`);
+    return this.request(`/mobile/donations?type=history`);
   }
 
   async getGivingStats(userId) {
-    return this.request(`/mobile/members/${userId}/giving-stats`);
+    return this.request(`/mobile/donations?type=stats`);
   }
 
   async processDonation(donationData) {
