@@ -197,7 +197,7 @@ const Communities = ({ user }) => {
           icon: <PlusOutlined />,
           children: 'Accept Invitation',
           onClick: () => handleJoinCommunity(community.id, community),
-          style: { backgroundColor: '#52c41a', borderColor: '#52c41a' }
+          style: { backgroundColor: '#4A7C23', borderColor: '#4A7C23' }
         };
       }
       
@@ -496,7 +496,7 @@ const mockCommunities = [
     memberCount: 28,
     leader: "Elder Sarah",
     meetingTime: "Wednesdays 7 PM",
-    color: "#52c41a"
+    color: "#4A7C23"
   },
   {
     id: 3,

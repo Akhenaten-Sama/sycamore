@@ -396,9 +396,9 @@ function ChurchMobileApp() {
   };
 
   const navigationItems = [
-    { key: "events", icon: <CalendarOutlined />, label: "Events", color: "#52c41a" },
+    { key: "events", icon: <CalendarOutlined />, label: "Events", color: "#4A7C23" },
     { key: "blog", icon: <ReadOutlined />, label: "Blog", color: "#1890ff" },
-    { key: "dashboard", icon: <UserOutlined />, label: "My Dashboard", color: "#13c2c2", requiresAuth: true },
+    { key: "dashboard", icon: <UserOutlined />, label: "My Dashboard", color: "#4A7C23", requiresAuth: true },
     { key: "communities", icon: <TeamOutlined />, label: "Communities", color: "#722ed1" },
     { key: "devotionals", icon: <BookOutlined />, label: "Devotionals", color: "#fa8c16" },
     { key: "media", icon: <PictureOutlined />, label: "Media Gallery", color: "#eb2f96" },

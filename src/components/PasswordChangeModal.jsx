@@ -56,7 +56,7 @@ const PasswordChangeModal = ({ visible, onClose, isFirstTime = false }) => {
   const getStrengthColor = (score) => {
     if (score < 40) return '#ff4d4f';
     if (score < 80) return '#faad14';
-    return '#52c41a';
+    return '#4A7C23';
   };
 
   const getStrengthText = (score) => {
@@ -188,7 +188,7 @@ const PasswordChangeModal = ({ visible, onClose, isFirstTime = false }) => {
           {/* Password Requirements */}
           <div style={{ marginTop: 12 }}>
             {passwordStrength.passed.map((requirement, index) => (
-              <div key={index} style={{ color: '#52c41a', fontSize: '12px' }}>
+              <div key={index} style={{ color: '#4A7C23', fontSize: '12px' }}>
                 <CheckCircleOutlined /> {requirement}
               </div>
             ))}

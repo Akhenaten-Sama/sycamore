@@ -154,7 +154,7 @@ const CommunityManagement = ({ visible, onClose, communityId, communityName }) =
                   type="primary"
                   icon={<CheckOutlined />}
                   onClick={() => handleApproveRequest(member.id)}
-                  style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  style={{ backgroundColor: '#4A7C23', borderColor: '#4A7C23' }}
                 >
                   Approve
                 </Button>,

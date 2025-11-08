@@ -253,7 +253,7 @@ const Giving = ({ user }) => {
             value={givingStats.monthlyTotal || 0}
             prefix={getCurrencySymbol(currency)}
             precision={2}
-            valueStyle={{ color: '#52c41a', fontSize: 18 }}
+            valueStyle={{ color: '#4A7C23', fontSize: 18 }}
           />
         </Card>
       </Col>
@@ -377,10 +377,10 @@ const Giving = ({ user }) => {
   const getCategoryColor = (category) => {
     const colors = {
       tithe: '#1890ff',
-      offering: '#52c41a', 
+      offering: '#4A7C23', 
       missions: '#722ed1',
       building: '#fa8c16',
-      youth: '#13c2c2',
+      youth: '#4A7C23',
       outreach: '#eb2f96',
       special: '#faad14'
     };

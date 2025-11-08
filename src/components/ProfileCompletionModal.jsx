@@ -113,7 +113,7 @@ const ProfileCompletionModal = ({ visible, onClose, user }) => {
           percent={completionPercentage} 
           strokeColor={{
             '0%': '#108ee9',
-            '100%': '#87d068',
+            '100%': '#4A7C23',
           }}
           style={{ marginTop: 8 }}
         />

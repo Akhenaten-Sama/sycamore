@@ -7,9 +7,9 @@ const { defaultAlgorithm, darkAlgorithm } = theme;
 export const lightTheme = {
   // Primary colors
   darkBlue: '#001219',      // Deep navy - primary text, headers
-  teal: '#005F73',          // Dark teal - secondary elements
-  lightTeal: '#0A9396',     // Medium teal - buttons, links
-  mint: '#94D2BD',          // Light mint - backgrounds, highlights
+  teal: '#2D5016',          // Forest green - secondary elements
+  lightTeal: '#4A7C23',     // Leafy green - buttons, links
+  mint: '#8FBC8F',          // Light sage - backgrounds, highlights
   
   // Accent colors
   darkRed: '#9B2226',       // Deep red - alerts, warnings
@@ -19,12 +19,12 @@ export const lightTheme = {
   yellow: '#EE9B00',        // Golden yellow - success, achievements
   
   // Semantic colors
-  primary: '#0A9396',       // Light teal for primary actions
-  secondary: '#005F73',     // Dark teal for secondary actions
+  primary: '#4A7C23',       // Leafy green for primary actions
+  secondary: '#2D5016',     // Forest green for secondary actions
   success: '#EE9B00',       // Golden yellow for success states
   warning: '#CA6702',       // Orange for warnings
   error: '#AE2012',         // Red for errors
-  info: '#94D2BD',          // Mint for info states
+  info: '#8FBC8F',          // Light sage for info states
   
   // Background colors
   background: '#F8FAFB',    // Light gray background instead of white
@@ -33,17 +33,17 @@ export const lightTheme = {
   
   // Text colors
   textPrimary: '#001219',   // Dark blue for primary text
-  textSecondary: '#005F73', // Dark teal for secondary text
-  textLight: '#0A9396',     // Light teal for muted text
+  textSecondary: '#2D5016', // Forest green for secondary text
+  textLight: '#4A7C23',     // Leafy green for muted text
   textWhite: '#FFFFFF',     // White text on dark backgrounds
 };
 
 export const darkTheme = {
   // Primary colors (adjusted for dark mode)
   darkBlue: '#E8F4F8',      // Light blue-gray for text
-  teal: '#94D2BD',          // Light mint for secondary elements
-  lightTeal: '#0A9396',     // Keep the same teal for consistency
-  mint: '#005F73',          // Darker mint for backgrounds
+  teal: '#8FBC8F',          // Light sage for secondary elements
+  lightTeal: '#4A7C23',     // Keep the leafy green for consistency
+  mint: '#2D5016',          // Darker forest green for backgrounds
   
   // Accent colors (slightly adjusted)
   darkRed: '#FF6B6B',       // Lighter red for better contrast
@@ -53,12 +53,12 @@ export const darkTheme = {
   yellow: '#FFD54F',        // Lighter yellow for success
   
   // Semantic colors
-  primary: '#0A9396',       // Keep primary teal
-  secondary: '#94D2BD',     // Light mint for secondary
+  primary: '#4A7C23',       // Keep primary leafy green
+  secondary: '#8FBC8F',     // Light sage for secondary
   success: '#FFD54F',       // Light yellow for success
   warning: '#FFA726',       // Light orange for warnings
   error: '#FF5252',         // Light red for errors
-  info: '#81C784',          // Light green for info
+  info: '#90EE90',          // Light green for info
   
   // Background colors
   background: '#0F1419',    // Very dark background
@@ -122,7 +122,7 @@ export const getAntdTheme = (isDarkMode) => {
     // Fallback to basic theme without algorithm
     return {
       token: {
-        colorPrimary: '#0A9396',
+        colorPrimary: '#4A7C23',
         borderRadius: 8,
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       },

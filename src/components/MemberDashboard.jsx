@@ -181,7 +181,7 @@ const MemberDashboard = ({ user }) => {
             title="Tasks Completed"
             value={memberStats.tasksCompleted}
             prefix={<CheckOutlined />}
-            valueStyle={{ fontSize: 18, color: '#52c41a' }}
+            valueStyle={{ fontSize: 18, color: '#4A7C23' }}
           />
         </Card>
       </Col>
