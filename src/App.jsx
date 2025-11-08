@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
+import AuthenticationGuard from './components/AuthenticationGuard';
 import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
 import BlogPage from './pages/BlogPage';
@@ -28,27 +29,29 @@ const AppContent = () => {
     <ErrorBoundary>
       <ConfigProvider theme={getAntdTheme(isDarkMode)}>
         <AuthProvider>
-          <Router>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/events" element={<EventsPage />} />
-                <Route path="/blog" element={<BlogPage />} />
-                <Route path="/members" element={<MembersPage />} />
-                <Route path="/communities" element={<CommunitiesPage />} />
-                <Route path="/communities/:id" element={<CommunityDetailsPage />} />
-                <Route path="/media" element={<MediaPage />} />
-                <Route path="/devotionals" element={<DevotionalsPage />} />
-                <Route path="/giving" element={<GivingPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/sermon-notes" element={<SermonNotesPage />} />
-                <Route path="/bible" element={<BiblePage />} />
-                <Route path="/requests" element={<RequestFormsPage />} />
-                <Route path="/watch-live" element={<WatchLivePage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
-          </Router>
+          <AuthenticationGuard>
+            <Router>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/events" element={<EventsPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/members" element={<MembersPage />} />
+                  <Route path="/communities" element={<CommunitiesPage />} />
+                  <Route path="/communities/:id" element={<CommunityDetailsPage />} />
+                  <Route path="/media" element={<MediaPage />} />
+                  <Route path="/devotionals" element={<DevotionalsPage />} />
+                  <Route path="/giving" element={<GivingPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/sermon-notes" element={<SermonNotesPage />} />
+                  <Route path="/bible" element={<BiblePage />} />
+                  <Route path="/requests" element={<RequestFormsPage />} />
+                  <Route path="/watch-live" element={<WatchLivePage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Layout>
+            </Router>
+          </AuthenticationGuard>
         </AuthProvider>
       </ConfigProvider>
     </ErrorBoundary>

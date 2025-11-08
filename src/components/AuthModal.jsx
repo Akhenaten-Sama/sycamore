@@ -12,6 +12,7 @@ import {
   Typography,
   Divider,
 } from 'antd';
+import apiClient from '../services/apiClient';
 import {
   UserOutlined,
   MailOutlined,
@@ -39,9 +40,13 @@ const AuthModal = ({ visible, onClose }) => {
       if (result.success) {
         onClose();
         loginForm.resetFields();
+      } else {
+        // Error is already handled in AuthContext, but we can add form-specific handling
+        console.error('Login failed:', result.error);
       }
     } catch (error) {
       console.error('Login failed:', error);
+      // Error is already shown via message.error in AuthContext
     } finally {
       setLoading(false);
     }
@@ -55,9 +60,36 @@ const AuthModal = ({ visible, onClose }) => {
       if (result.success) {
         onClose();
         registerForm.resetFields();
+      } else {
+        // Error is already handled in AuthContext, but we can add form-specific handling
+        console.error('Registration failed:', result.error);
       }
     } catch (error) {
       console.error('Registration failed:', error);
+      // Error is already shown via message.error in AuthContext
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = loginForm.getFieldValue('email');
+    if (!email) {
+      message.error('Please enter your email address first');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await apiClient.forgotPassword(email);
+      if (response.success) {
+        message.success('Password reset link sent to your email!');
+      } else {
+        message.error(response.message || 'Failed to send reset email');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      message.error(error.message || 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
@@ -105,6 +137,16 @@ const AuthModal = ({ visible, onClose }) => {
           icon={<LoginOutlined />}
         >
           Sign In
+        </Button>
+      </Form.Item>
+
+      <Form.Item style={{ textAlign: 'center', marginBottom: 0 }}>
+        <Button 
+          type="link" 
+          onClick={() => handleForgotPassword()}
+          style={{ padding: 0 }}
+        >
+          Forgot your password?
         </Button>
       </Form.Item>
     </Form>

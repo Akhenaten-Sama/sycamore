@@ -21,10 +21,25 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      
+      // Handle different content types
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = { message: await response.text() };
+      }
       
       if (!response.ok) {
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        // Extract error message from different response formats
+        const errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+      
+      // For auth endpoints, return the full response to preserve success/token structure
+      if (endpoint.includes('/auth/')) {
+        return data;
       }
       
       // If the response has a success field and data field, return just the data
@@ -62,6 +77,27 @@ class ApiClient {
     return this.request('/mobile/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
+    });
+  }
+
+  async forgotPassword(email) {
+    return this.request('/auth/mobile/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token, password) {
+    return this.request('/auth/mobile/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  }
+
+  async changePassword(currentPassword, newPassword, isFirstTime = false) {
+    return this.request('/auth/mobile/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword, isFirstTime }),
     });
   }
 

@@ -16,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
@@ -33,6 +35,13 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         setUser(response.user);
         setIsAuthenticated(true);
+        
+        // Check if user needs to change password or complete profile
+        if (response.user.mustChangePassword) {
+          setShowPasswordChange(true);
+        } else if (!response.user.profileComplete) {
+          setShowProfileCompletion(true);
+        }
       } else {
         // Invalid token, clear it
         localStorage.removeItem('authToken');
@@ -58,7 +67,18 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('authToken', response.token);
         setUser(response.user);
         setIsAuthenticated(true);
-        message.success('Welcome back! 🎉');
+        
+        // Check if user needs to change password or complete profile
+        if (response.user.mustChangePassword) {
+          setShowPasswordChange(true);
+          message.success('Welcome! Please set your new password.');
+        } else if (!response.user.profileComplete) {
+          setShowProfileCompletion(true);
+          message.success('Welcome back! Please complete your profile.');
+        } else {
+          message.success('Welcome back! 🎉');
+        }
+        
         return { success: true };
       } else {
         message.error(response.message || 'Login failed');
@@ -135,6 +155,10 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     checkAuthStatus,
+    showProfileCompletion,
+    setShowProfileCompletion,
+    showPasswordChange,
+    setShowPasswordChange,
   };
 
   return (
