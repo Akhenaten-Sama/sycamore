@@ -50,7 +50,7 @@ const HomePage = () => {
       if (hour < 17) return `Good afternoon, ${user.firstName}`;
       return `Good evening, ${user.firstName}`;
     } else {
-      return isSunday ? 'Welcome to Sycamore Church! 🙏' : 'Welcome to Sycamore Church';
+      return isSunday ? 'Welcome to Service!' : 'Welcome to Sycamore Church';
     }
   };
 
@@ -66,7 +66,7 @@ const HomePage = () => {
       <div style={{ 
         padding: '20px 16px', 
         background: isSunday 
-          ? `linear-gradient(135deg, ${colors.darkRed} 0%, ${colors.brightRed} 100%)`
+          ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
           : `linear-gradient(135deg, ${colors.darkBlue} 0%, ${colors.teal} 100%)`,
         color: colors.textWhite
       }}>
