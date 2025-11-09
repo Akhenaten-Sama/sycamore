@@ -33,12 +33,28 @@ class ApiClient {
       
       if (!response.ok) {
         // Extract error message from different response formats
-        const errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+        let errorMessage = 'An error occurred';
+        
+        if (data && typeof data === 'object') {
+          errorMessage = data.message || data.error || data.msg || 
+                        (data.errors && Array.isArray(data.errors) ? data.errors.join(', ') : '') ||
+                        `HTTP ${response.status}: ${response.statusText}`;
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        } else {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
         throw new Error(errorMessage);
       }
       
-      // For auth endpoints, return the full response to preserve success/token structure
+      // Always return the full response for auth endpoints to preserve structure
       if (endpoint.includes('/auth/')) {
+        return data;
+      }
+      
+      // For mobile endpoints, also return full response to preserve success/message structure
+      if (endpoint.includes('/mobile/')) {
         return data;
       }
       

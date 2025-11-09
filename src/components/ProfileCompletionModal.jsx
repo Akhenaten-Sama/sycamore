@@ -73,16 +73,18 @@ const ProfileCompletionModal = ({ visible, onClose, user }) => {
 
       const response = await apiClient.updateProfile(cleanData);
       
-      if (response.success) {
+      if (response && response.success !== false) {
         await updateProfile(cleanData);
-        message.success('Profile updated successfully! 🎉');
+        message.success(response.message || 'Profile updated successfully! 🎉');
         onClose();
       } else {
-        message.error(response.message || 'Failed to update profile');
+        const errorMessage = response?.message || 'Failed to update profile. Please try again.';
+        message.error(errorMessage);
       }
     } catch (error) {
       console.error('Profile update error:', error);
-      message.error(error.message || 'Failed to update profile');
+      const errorMessage = error.message || 'Failed to update profile. Please try again.';
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

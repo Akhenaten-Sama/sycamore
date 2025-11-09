@@ -82,14 +82,16 @@ const AuthModal = ({ visible, onClose }) => {
     try {
       setLoading(true);
       const response = await apiClient.forgotPassword(email);
-      if (response.success) {
-        message.success('Password reset link sent to your email!');
+      
+      // Handle both success response formats
+      if (response && (response.success !== false)) {
+        message.success(response.message || 'Password reset link sent to your email!');
       } else {
-        message.error(response.message || 'Failed to send reset email');
+        message.error(response?.message || 'Failed to send reset email');
       }
     } catch (error) {
       console.error('Forgot password error:', error);
-      message.error(error.message || 'Failed to send reset email');
+      message.error(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -74,16 +74,18 @@ const PasswordChangeModal = ({ visible, onClose, isFirstTime = false }) => {
         isFirstTime
       );
 
-      if (response.success) {
-        message.success('Password changed successfully! 🔒');
+      if (response && response.success !== false) {
+        message.success(response.message || 'Password changed successfully! 🔒');
         form.resetFields();
         onClose();
       } else {
-        message.error(response.message || 'Failed to change password');
+        const errorMessage = response?.message || 'Failed to change password. Please try again.';
+        message.error(errorMessage);
       }
     } catch (error) {
       console.error('Password change error:', error);
-      message.error(error.message || 'Failed to change password');
+      const errorMessage = error.message || 'Failed to change password. Please try again.';
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
