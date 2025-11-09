@@ -61,7 +61,7 @@ const ProfileCompletionModal = ({ visible, onClose, user }) => {
         emergencyContact: values.emergencyName ? {
           name: values.emergencyName,
           phone: values.emergencyPhone || '',
-          relationship: values.emergencyRelationship || 'Emergency Contact'
+          relationship: values.emergencyRelationship || 'Next of Kin'
         } : undefined,
         weddingAnniversary: values.weddingAnniversary?.format('YYYY-MM-DD'),
       };
@@ -215,26 +215,26 @@ const ProfileCompletionModal = ({ visible, onClose, user }) => {
           </Form.Item>
         </Card>
 
-        <Card title="🚨 Emergency Contact" style={{ marginBottom: 24 }}>
+        <Card title="�‍👩‍👧‍👦 Next of Kin" style={{ marginBottom: 24 }}>
           <Form.Item
             name="emergencyName"
-            label="Emergency Contact Name"
+            label="Next of Kin Name"
           >
             <Input
               prefix={<ContactsOutlined />}
-              placeholder="Full name of emergency contact"
+              placeholder="Full name of next of kin"
             />
           </Form.Item>
 
           <Space direction="horizontal" style={{ width: '100%' }}>
             <Form.Item
               name="emergencyPhone"
-              label="Emergency Contact Phone"
+              label="Next of Kin Phone"
               style={{ flex: 1 }}
             >
               <Input
                 prefix={<PhoneOutlined />}
-                placeholder="Emergency contact phone"
+                placeholder="Next of kin phone"
               />
             </Form.Item>
 
