@@ -29,24 +29,25 @@ const { Option } = Select;
 const AuthModal = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
   const { login, register } = useAuth();
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
 
   const handleLogin = async (values) => {
     setLoading(true);
+    setLoginError('');
     try {
-      const result = await login(values);
-      if (result.success) {
+      const response = await apiClient.login(values);
+      if (response && response.token) {
         onClose();
         loginForm.resetFields();
       } else {
-        // Error is already handled in AuthContext, but we can add form-specific handling
-        console.error('Login failed:', result.error);
+        setLoginError(response?.message || 'Login failed');
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      // Error is already shown via message.error in AuthContext
+      setLoginError(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -75,23 +76,22 @@ const AuthModal = ({ visible, onClose }) => {
   const handleForgotPassword = async () => {
     const email = loginForm.getFieldValue('email');
     if (!email) {
-      message.error('Please enter your email address first');
+      setForgotPasswordMessage('Please enter your email address first');
       return;
     }
 
     try {
       setLoading(true);
+      setForgotPasswordMessage('');
       const response = await apiClient.forgotPassword(email);
       
-      // Handle both success response formats
-      if (response && (response.success !== false)) {
-        message.success(response.message || 'Password reset link sent to your email!');
+      if (response && response.message) {
+        setForgotPasswordMessage(response.message);
       } else {
-        message.error(response?.message || 'Failed to send reset email');
+        setForgotPasswordMessage('Failed to send reset email');
       }
     } catch (error) {
-      console.error('Forgot password error:', error);
-      message.error(error.message || 'Failed to send reset email. Please try again.');
+      setForgotPasswordMessage(error.message || 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
@@ -150,6 +150,34 @@ const AuthModal = ({ visible, onClose }) => {
         >
           Forgot your password?
         </Button>
+        {loginError && (
+          <div style={{ 
+            color: '#ff4d4f', 
+            backgroundColor: '#fff2f0',
+            border: '1px solid #ffccc7',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            marginTop: '12px',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            {loginError}
+          </div>
+        )}
+        {forgotPasswordMessage && (
+          <div style={{ 
+            color: forgotPasswordMessage.includes('sent') ? '#52c41a' : '#ff4d4f',
+            backgroundColor: forgotPasswordMessage.includes('sent') ? '#f6ffed' : '#fff2f0',
+            border: forgotPasswordMessage.includes('sent') ? '1px solid #b7eb8f' : '1px solid #ffccc7',
+            borderRadius: '6px',
+            padding: '8px 12px',
+            marginTop: '12px',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            {forgotPasswordMessage}
+          </div>
+        )}
       </Form.Item>
     </Form>
   );

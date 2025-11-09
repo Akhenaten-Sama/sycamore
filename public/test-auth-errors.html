@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Auth Error Messages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4A7C23;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2D5016;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 20px;
+        }
+        .success {
+            background: #d4f8d4;
+            border: 1px solid #4A7C23;
+            color: #2D5016;
+        }
+        .error {
+            background: #ffe6e6;
+            border: 1px solid #ff4444;
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Error Message Testing</h1>
+    <p>This page tests that error messages from authentication endpoints are properly displayed.</p>
+
+    <div class="test-section">
+        <h3>Login Test</h3>
+        <p>Test login with invalid credentials:</p>
+        <button onclick="testLogin()">Test Invalid Login</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Forgot Password Test</h3>
+        <p>Test forgot password with various email formats:</p>
+        <button onclick="testForgotPassword('invalid-email')">Test Invalid Email</button>
+        <button onclick="testForgotPassword('test@example.com')">Test Valid Email</button>
+        <div id="forgotResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Registration Test</h3>
+        <p>Test registration with invalid data:</p>
+        <button onclick="testRegister()">Test Invalid Registration</button>
+        <div id="registerResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://admin.sycamore.church/api';
+
+        async function makeRequest(endpoint, data) {
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                let responseData;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                } else {
+                    responseData = { message: await response.text() };
+                }
+
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: responseData
+                };
+            } catch (error) {
+                return {
+                    ok: false,
+                    status: 0,
+                    data: { message: error.message }
+                };
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = 'Testing login with invalid credentials...';
+            
+            const result = await makeRequest('/auth/mobile/login', {
+                email: 'invalid@example.com',
+                password: 'wrongpassword'
+            });
+
+            if (result.ok) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Response: ${result.data.message || 'Login successful'}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error (${result.status}): ${result.data.message || 'Unknown error'}`;
+            }
+        }
+
+        async function testForgotPassword(email) {
+            const resultDiv = document.getElementById('forgotResult');
+            resultDiv.innerHTML = `Testing forgot password with email: ${email}...`;
+            
+            const result = await makeRequest('/auth/mobile/forgot-password', {
+                email: email
+            });
+
+            if (result.ok) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Response: ${result.data.message || 'Password reset email sent'}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error (${result.status}): ${result.data.message || 'Unknown error'}`;
+            }
+        }
+
+        async function testRegister() {
+            const resultDiv = document.getElementById('registerResult');
+            resultDiv.innerHTML = 'Testing registration with invalid data...';
+            
+            const result = await makeRequest('/auth/mobile/register', {
+                email: 'invalid-email',
+                password: '123', // Too short
+                firstName: '',
+                lastName: ''
+            });
+
+            if (result.ok) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `✅ Response: ${result.data.message || 'Registration successful'}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error (${result.status}): ${result.data.message || 'Unknown error'}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await apiClient.login(credentials);
       
-      if (response && response.success !== false && response.token) {
+      if (response && response.token) {
         localStorage.setItem('authToken', response.token);
         setUser(response.user);
         setIsAuthenticated(true);
@@ -81,15 +81,15 @@ export const AuthProvider = ({ children }) => {
         
         return { success: true };
       } else {
-        const errorMessage = response?.message || 'Login failed. Please check your credentials.';
+        // Just show the error message from API
+        const errorMessage = response?.message || 'Login failed';
         message.error(errorMessage);
         return { success: false, error: errorMessage };
       }
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error.message || 'Login failed. Please try again.';
-      message.error(errorMessage);
-      return { success: false, error: errorMessage };
+      message.error(error.message || 'Login failed');
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
@@ -100,22 +100,20 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await apiClient.register(userData);
       
-      if (response && response.success !== false && response.token) {
+      if (response && response.token) {
         localStorage.setItem('authToken', response.token);
         setUser(response.user);
         setIsAuthenticated(true);
         message.success('Registration successful! Welcome to Sycamore Church! 🙏');
         return { success: true };
       } else {
-        const errorMessage = response?.message || 'Registration failed. Please check your information.';
-        message.error(errorMessage);
-        return { success: false, error: errorMessage };
+        message.error(response?.message || 'Registration failed');
+        return { success: false, error: response?.message };
       }
     } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error.message || 'Registration failed. Please try again.';
-      message.error(errorMessage);
-      return { success: false, error: errorMessage };
+      message.error(error.message || 'Registration failed');
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
