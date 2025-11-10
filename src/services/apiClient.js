@@ -356,8 +356,8 @@ class ApiClient {
     });
   }
 
-  async addMediaComment(commentData) {
-    return this.request('/mobile/media/comments', {
+  async addMediaComment(mediaId, commentData) {
+    return this.request(`/mobile/media/${mediaId}/comments`, {
       method: 'POST',
       body: JSON.stringify(commentData)
     });

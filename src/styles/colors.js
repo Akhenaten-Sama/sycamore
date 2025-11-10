@@ -109,7 +109,7 @@ export const getAntdTheme = (isDarkMode) => {
           controlHeight: 40,
         },
         Layout: {
-          colorBgBody: themeColors.background,
+          bodyBg: themeColors.background,
           colorBgContainer: themeColors.cardBackground,
         },
         Menu: {

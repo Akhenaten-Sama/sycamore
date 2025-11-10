@@ -208,7 +208,6 @@ const Layout = ({ children }) => {
           {/* Theme Toggle */}
           <Button
             type="text"
-            ghost
             icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
             onClick={toggleTheme}
             style={{ 

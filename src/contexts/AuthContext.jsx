@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
           setShowProfileCompletion(true);
           message.success('Welcome back! Please complete your profile.');
         } else {
-          message.success('Welcome back! 🎉');
+          message.success('Welcome back!');
         }
         
         return { success: true };
@@ -128,6 +128,12 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
+      console.log('🔧 Updating profile for user:', { 
+        userId: user.memberId || user.id,
+        memberId: user.memberId,
+        id: user.id 
+      });
+      
       const response = await apiClient.updateProfile({
         ...profileData,
         userId: user.memberId || user.id

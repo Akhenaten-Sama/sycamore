@@ -39,12 +39,12 @@ const AuthModal = ({ visible, onClose }) => {
     setLoading(true);
     setLoginError('');
     try {
-      const response = await apiClient.login(values);
-      if (response && response.token) {
+      const result = await login(values);
+      if (result.success) {
         onClose();
         loginForm.resetFields();
       } else {
-        setLoginError(response?.message || 'Login failed');
+        setLoginError(result.error || 'Login failed');
       }
     } catch (error) {
       setLoginError(error.message || 'Login failed');
@@ -406,7 +406,7 @@ const AuthModal = ({ visible, onClose }) => {
       footer={null}
       width={500}
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <Tabs
         activeKey={activeTab}

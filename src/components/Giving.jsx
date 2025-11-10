@@ -33,6 +33,11 @@ import {
   MobileOutlined,
   CheckOutlined,
   StarOutlined,
+  BarChartOutlined,
+  GlobalOutlined,
+  HomeOutlined,
+  TeamOutlined,
+  UsergroupAddOutlined,
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
 
@@ -196,7 +201,7 @@ const Giving = ({ user }) => {
 
               const result = await ApiClient.processDonation(donationWithPayment);
               
-              message.success('🙏 Thank you for your generous donation!');
+              message.success('Thank you for your generous donation!');
               form.resetFields();
               loadGivingHistory();
               loadGivingStats();
@@ -224,13 +229,13 @@ const Giving = ({ user }) => {
   };
 
   const givingCategories = [
-    { key: 'tithe', label: '💰 Tithe', description: 'Regular tithe offering' },
-    { key: 'offering', label: '🙏 General Offering', description: 'General church offering' },
-    { key: 'missions', label: '🌍 Missions', description: 'Support missionary work' },
-    { key: 'building', label: '🏗️ Building Fund', description: 'Church building and maintenance' },
-    { key: 'youth', label: '👥 Youth Ministry', description: 'Support youth programs' },
-    { key: 'outreach', label: '🤝 Community Outreach', description: 'Help local community' },
-    { key: 'special', label: '⭐ Special Projects', description: 'Special church initiatives' },
+    { key: 'tithe', icon: <HeartOutlined />, label: 'Tithe', description: 'Regular tithe offering' },
+    { key: 'offering', icon: <GiftOutlined />, label: 'General Offering', description: 'General church offering' },
+    { key: 'missions', icon: <GlobalOutlined />, label: 'Missions', description: 'Support missionary work' },
+    { key: 'building', icon: <HomeOutlined />, label: 'Building Fund', description: 'Church building and maintenance' },
+    { key: 'youth', icon: <TeamOutlined />, label: 'Youth Ministry', description: 'Support youth programs' },
+    { key: 'outreach', icon: <UsergroupAddOutlined />, label: 'Community Outreach', description: 'Help local community' },
+    { key: 'special', icon: <StarOutlined />, label: 'Special Projects', description: 'Special church initiatives' },
   ];
 
   const StatsSection = () => (
@@ -290,11 +295,11 @@ const Giving = ({ user }) => {
             onClick={() => openDonationModal(category)}
             style={{ textAlign: 'center', height: 150 }}
           >
-            <div style={{ fontSize: 24, marginBottom: 8 }}>
-              {category.label.split(' ')[0]}
+            <div style={{ fontSize: 24, marginBottom: 8, color: '#1890ff' }}>
+              {category.icon}
             </div>
             <Title level={4} style={{ margin: 0 }}>
-              {category.label.split(' ').slice(1).join(' ')}
+              {category.label}
             </Title>
             <Text type="secondary" style={{ fontSize: 12 }}>
               {category.description}
@@ -311,7 +316,15 @@ const Giving = ({ user }) => {
   };
 
   const GivingHistory = () => (
-    <Card title="📊 Giving History" style={{ marginTop: 24 }}>
+    <Card 
+      title={
+        <span>
+          <BarChartOutlined style={{ marginRight: 8 }} />
+          Giving History
+        </span>
+      }
+      style={{ marginTop: 24 }}
+    >
       {givingHistory.length > 0 ? (
         <List
           dataSource={givingHistory}
@@ -395,7 +408,10 @@ const Giving = ({ user }) => {
   return (
     <div style={{ padding: '16px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2}>💝 Give</Title>
+        <Title level={2}>
+          <HeartOutlined style={{ marginRight: 8 }} />
+          Give
+        </Title>
         <Paragraph type="secondary">
           "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver." - 2 Corinthians 9:7
         </Paragraph>
@@ -418,7 +434,15 @@ const Giving = ({ user }) => {
         <>
           <StatsSection />
           
-          <Card title="🎯 Choose Your Giving" style={{ marginBottom: 24 }}>
+          <Card 
+            title={
+              <span>
+                <DollarOutlined style={{ marginRight: 8 }} />
+                Choose Your Giving
+              </span>
+            } 
+            style={{ marginBottom: 24 }}
+          >
             <GivingOptions />
             
             <div style={{ textAlign: 'center' }}>
@@ -439,7 +463,12 @@ const Giving = ({ user }) => {
 
       {/* Donation Modal */}
       <Modal
-        title="💝 Make a Donation"
+        title={
+          <span>
+            <GiftOutlined style={{ marginRight: 8 }} />
+            Make a Donation
+          </span>
+        }
         open={donationModal}
         onCancel={() => setDonationModal(false)}
         footer={null}
@@ -493,12 +522,12 @@ const Giving = ({ user }) => {
                 >
                   {Object.entries(currencies).map(([code, info]) => (
                     <Option key={code} value={code}>
-                      {info.symbol} {code} {info.paystack ? '💳' : '🏦'}
+                      {info.symbol} {code} {info.paystack ? <CreditCardOutlined /> : <BankOutlined />}
                     </Option>
                   ))}
                 </Select>
                 <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                  💳 = Paystack supported, 🏦 = Contact church for other payment methods
+                  <CreditCardOutlined /> = Paystack supported, <BankOutlined /> = Contact church for other payment methods
                 </div>
               </Form.Item>
             </Col>
@@ -528,7 +557,7 @@ const Giving = ({ user }) => {
                 Cancel
               </Button>
               <Button type="primary" htmlType="submit" loading={loading} size="large">
-                Donate with Paystack 🙏
+                Donate
               </Button>
             </Space>
           </Form.Item>

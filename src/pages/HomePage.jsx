@@ -1,5 +1,5 @@
-import React from 'react';
-import { Typography, Row, Col, Card, Button, Space, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Typography, Row, Col, Card, Button, Space, Tag, Image } from 'antd';
 import { 
   CalendarOutlined, 
   UserOutlined, 
@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles/colors';
+import ApiClient from '../services/apiClient';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -29,6 +30,8 @@ const HomePage = () => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const colors = getColors(isDarkMode);
+  const [latestMessage, setLatestMessage] = useState(null);
+  const [loadingMessage, setLoadingMessage] = useState(true);
 
   const now = new Date();
   const isSunday = now.getDay() === 0; // Sunday is day 0
@@ -39,6 +42,26 @@ const HomePage = () => {
     month: 'long', 
     day: 'numeric' 
   });
+
+  // Load latest message on component mount
+  useEffect(() => {
+    loadLatestMessage();
+  }, []);
+
+  const loadLatestMessage = async () => {
+    try {
+      setLoadingMessage(true);
+      const response = await ApiClient.getMedia('?type=video&limit=1');
+      const mediaData = response?.data || response || [];
+      if (mediaData.length > 0) {
+        setLatestMessage(mediaData[0]);
+      }
+    } catch (error) {
+      console.error('Failed to load latest message:', error);
+    } finally {
+      setLoadingMessage(false);
+    }
+  };
 
   // Function to get appropriate greeting based on time and day
   const getGreeting = () => {
@@ -406,59 +429,98 @@ const HomePage = () => {
           </Col>
         </Row>
 
-        {/* Latest Sermon Card */}
-        <Card 
-          style={{ 
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: `1px solid ${colors.mint}`,
-            marginBottom: '16px',
-            backgroundColor: colors.cardBackground,
-            boxShadow: `0 4px 12px ${colors.darkBlue}10`
-          }}
-          bodyStyle={{ padding: 0 }}
-        >
-          <div style={{ 
-            background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80) center/cover`,
-            height: '200px',
-            display: 'flex',
-            alignItems: 'flex-end',
-            color: colors.textWhite,
-            padding: '24px'
-          }}>
-            <div>
-              <Tag color={colors.success} style={{ marginBottom: '8px' }}>
-                <ClockCircleOutlined /> September 8, 2025
-              </Tag>
-              <Title level={4} style={{ color: colors.textWhite, marginBottom: '4px' }}>
-                Faith Over Fear
-              </Title>
-              <Text style={{ color: 'rgba(255,255,255,0.9)' }}>
-                Pastor Johnson explores how faith can overcome our deepest fears
-              </Text>
+        {/* Latest Message Card */}
+        {loadingMessage ? (
+          <Card loading style={{ marginBottom: '16px' }} />
+        ) : latestMessage ? (
+          <Card 
+            style={{ 
+              borderRadius: '16px',
+              overflow: 'hidden',
+              border: `1px solid ${colors.mint}`,
+              marginBottom: '16px',
+              backgroundColor: colors.cardBackground,
+              boxShadow: `0 4px 12px ${colors.darkBlue}10`
+            }}
+            bodyStyle={{ padding: 0 }}
+          >
+            <div style={{ 
+              background: latestMessage.thumbnail 
+                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(${latestMessage.thumbnail}) center/cover`
+                : `linear-gradient(135deg, ${colors.primary}88, ${colors.secondary}88)`,
+              height: '200px',
+              display: 'flex',
+              alignItems: 'flex-end',
+              color: colors.textWhite,
+              padding: '24px',
+              position: 'relative',
+              cursor: 'pointer'
+            }}
+            onClick={() => navigate('/media')}
+            >
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: 48,
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                }}
+              >
+                <PlayCircleOutlined />
+              </div>
+              <div>
+                <Tag color={colors.success} style={{ marginBottom: '8px' }}>
+                  <ClockCircleOutlined /> {latestMessage.date ? new Date(latestMessage.date).toLocaleDateString() : 'Recent'}
+                </Tag>
+                <Title level={4} style={{ color: colors.textWhite, marginBottom: '4px' }}>
+                  {latestMessage.title}
+                </Title>
+                <Text style={{ color: 'rgba(255,255,255,0.9)' }}>
+                  {latestMessage.speaker && `${latestMessage.speaker} • `}
+                  {latestMessage.description || 'Watch the latest message from our church'}
+                </Text>
+              </div>
             </div>
-          </div>
-          <div style={{ padding: '16px' }}>
-            <Button 
-              type="primary" 
-              icon={<PlayCircleOutlined />}
-              style={{
-                background: colors.primary,
-                borderColor: colors.primary,
-                marginRight: '8px'
-              }}
-              onClick={() => navigate('/media')}
-            >
-              Watch
+            <div style={{ padding: '16px' }}>
+              <Button 
+                type="primary" 
+                icon={<PlayCircleOutlined />}
+                style={{
+                  background: colors.primary,
+                  borderColor: colors.primary,
+                  marginRight: '8px'
+                }}
+                onClick={() => navigate('/media')}
+              >
+                Watch
+              </Button>
+              <Button 
+                icon={<FileTextOutlined />}
+                onClick={() => navigate('/sermon-notes')}
+              >
+                Notes
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <Card 
+            style={{ 
+              borderRadius: '16px',
+              marginBottom: '16px',
+              backgroundColor: colors.cardBackground,
+              textAlign: 'center'
+            }}
+          >
+            <Text type="secondary">No messages available</Text>
+            <br />
+            <Button type="link" onClick={() => navigate('/media')}>
+              View Media Gallery
             </Button>
-            <Button 
-              icon={<FileTextOutlined />}
-              onClick={() => navigate('/sermon-notes')}
-            >
-              Notes
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
 
       {/* Quick Links */}
