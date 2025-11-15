@@ -40,11 +40,13 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 const Giving = ({ user }) => {
+  const { isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [donationModal, setDonationModal] = useState(false);
   const [givingHistory, setGivingHistory] = useState([]);
@@ -241,45 +243,57 @@ const Giving = ({ user }) => {
   const StatsSection = () => (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
       <Col xs={12} sm={6}>
-        <Card>
+        <Card style={{
+          background: isDarkMode ? '#1e1e1e' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        }}>
           <Statistic
-            title="This Year"
+            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>This Year</span>}
             value={givingStats.yearlyTotal || 0}
             prefix={getCurrencySymbol(currency)}
             precision={2}
-            valueStyle={{ color: '#1890ff', fontSize: 18 }}
+            valueStyle={{ color: isDarkMode ? '#4a9d9d' : '#1890ff', fontSize: 18 }}
           />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
-        <Card>
+        <Card style={{
+          background: isDarkMode ? '#1e1e1e' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        }}>
           <Statistic
-            title="This Month"
+            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>This Month</span>}
             value={givingStats.monthlyTotal || 0}
             prefix={getCurrencySymbol(currency)}
             precision={2}
-            valueStyle={{ color: '#4A7C23', fontSize: 18 }}
+            valueStyle={{ color: isDarkMode ? '#4a9d9d' : '#4A7C23', fontSize: 18 }}
           />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
-        <Card>
+        <Card style={{
+          background: isDarkMode ? '#1e1e1e' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        }}>
           <Statistic
-            title="Total Gifts"
+            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>Total Gifts</span>}
             value={givingStats.totalDonations || 0}
             prefix="#"
-            valueStyle={{ color: '#722ed1', fontSize: 18 }}
+            valueStyle={{ color: isDarkMode ? '#9b59b6' : '#722ed1', fontSize: 18 }}
           />
         </Card>
       </Col>
       <Col xs={12} sm={6}>
-        <Card>
+        <Card style={{
+          background: isDarkMode ? '#1e1e1e' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        }}>
           <Statistic
-            title="Giving Streak"
+            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>Giving Streak</span>}
             value={givingStats.givingStreak || 0}
             suffix="months"
             prefix={<TrophyOutlined />}
-            valueStyle={{ color: '#fa8c16', fontSize: 18 }}
+            valueStyle={{ color: isDarkMode ? '#e67e22' : '#fa8c16', fontSize: 18 }}
           />
         </Card>
       </Col>
@@ -293,15 +307,20 @@ const Giving = ({ user }) => {
           <Card
             hoverable
             onClick={() => openDonationModal(category)}
-            style={{ textAlign: 'center', height: 150 }}
+            style={{ 
+              textAlign: 'center', 
+              height: 150,
+              background: isDarkMode ? '#1e1e1e' : '#ffffff',
+              border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+            }}
           >
-            <div style={{ fontSize: 24, marginBottom: 8, color: '#1890ff' }}>
+            <div style={{ fontSize: 24, marginBottom: 8, color: isDarkMode ? '#4a9d9d' : '#1890ff' }}>
               {category.icon}
             </div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} style={{ margin: 0, color: isDarkMode ? '#fff' : '#000' }}>
               {category.label}
             </Title>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text style={{ fontSize: 12, color: isDarkMode ? '#999' : '#666' }}>
               {category.description}
             </Text>
           </Card>
@@ -318,12 +337,16 @@ const Giving = ({ user }) => {
   const GivingHistory = () => (
     <Card 
       title={
-        <span>
+        <span style={{ color: isDarkMode ? '#fff' : '#000' }}>
           <BarChartOutlined style={{ marginRight: 8 }} />
           Giving History
         </span>
       }
-      style={{ marginTop: 24 }}
+      style={{ 
+        marginTop: 24,
+        background: isDarkMode ? '#1e1e1e' : '#ffffff',
+        border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+      }}
     >
       {givingHistory.length > 0 ? (
         <List
@@ -342,8 +365,8 @@ const Giving = ({ user }) => {
                 }
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{getCategoryLabel(donation.category)}</span>
-                    <Text strong>
+                    <span style={{ color: isDarkMode ? '#fff' : '#000' }}>{getCategoryLabel(donation.category)}</span>
+                    <Text strong style={{ color: isDarkMode ? '#fff' : '#000' }}>
                       {getCurrencySymbol(donation.currency)}{donation.amount.toFixed(2)} {donation.currency}
                     </Text>
                   </div>
@@ -363,7 +386,7 @@ const Giving = ({ user }) => {
                     </Space>
                     {donation.note && (
                       <div style={{ marginTop: 4 }}>
-                        <Text type="secondary" style={{ fontStyle: 'italic' }}>
+                        <Text style={{ fontStyle: 'italic', color: isDarkMode ? '#999' : '#666' }}>
                           "{donation.note}"
                         </Text>
                       </div>
@@ -376,10 +399,17 @@ const Giving = ({ user }) => {
         />
       ) : (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <GiftOutlined style={{ fontSize: 64, color: '#d9d9d9', marginBottom: 16 }} />
-          <Title level={4} type="secondary">No giving history yet</Title>
-          <Paragraph type="secondary">Your donations will appear here</Paragraph>
-          <Button type="primary" onClick={() => setDonationModal(true)}>
+          <GiftOutlined style={{ fontSize: 64, color: isDarkMode ? '#444' : '#d9d9d9', marginBottom: 16 }} />
+          <Title level={4} style={{ color: isDarkMode ? '#999' : '#666' }}>No giving history yet</Title>
+          <Paragraph style={{ color: isDarkMode ? '#888' : '#999' }}>Your donations will appear here</Paragraph>
+          <Button 
+            type="primary" 
+            onClick={() => setDonationModal(true)}
+            style={{
+              background: isDarkMode ? '#2d7a7a' : '#1890ff',
+              borderColor: isDarkMode ? '#2d7a7a' : '#1890ff'
+            }}
+          >
             Make Your First Donation
           </Button>
         </div>
@@ -406,16 +436,40 @@ const Giving = ({ user }) => {
   };
 
   return (
-    <div style={{ padding: '16px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2}>
+    <div style={{ 
+      padding: 0,
+      background: isDarkMode ? '#121212' : '#f5f5f5',
+      minHeight: '100vh'
+    }}>
+      {/* Header Section */}
+      <div style={{ 
+        padding: '16px',
+        background: isDarkMode ? '#121212' : '#f5f5f5'
+      }}>
+        <Title 
+          level={3} 
+          style={{ 
+            color: isDarkMode ? '#ffffff' : '#000000',
+            marginBottom: 8,
+            fontSize: '20px',
+            fontWeight: 700
+          }}
+        >
           <HeartOutlined style={{ marginRight: 8 }} />
           Give
         </Title>
-        <Paragraph type="secondary">
+        <Paragraph 
+          style={{ 
+            color: isDarkMode ? '#999' : '#666',
+            fontSize: '14px',
+            marginBottom: 0
+          }}
+        >
           "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver." - 2 Corinthians 9:7
         </Paragraph>
       </div>
+
+      <div style={{ padding: '0 16px 16px' }}>
 
       {!user ? (
         <Alert
@@ -436,12 +490,16 @@ const Giving = ({ user }) => {
           
           <Card 
             title={
-              <span>
+              <span style={{ color: isDarkMode ? '#fff' : '#000' }}>
                 <DollarOutlined style={{ marginRight: 8 }} />
                 Choose Your Giving
               </span>
             } 
-            style={{ marginBottom: 24 }}
+            style={{ 
+              marginBottom: 24,
+              background: isDarkMode ? '#1e1e1e' : '#ffffff',
+              border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+            }}
           >
             <GivingOptions />
             
@@ -451,6 +509,14 @@ const Giving = ({ user }) => {
                 size="large"
                 icon={<HeartOutlined />}
                 onClick={() => setDonationModal(true)}
+                style={{
+                  background: isDarkMode ? '#2d7a7a' : '#1890ff',
+                  borderColor: isDarkMode ? '#2d7a7a' : '#1890ff',
+                  height: '48px',
+                  fontSize: '15px',
+                  borderRadius: '12px',
+                  fontWeight: 600
+                }}
               >
                 Make a Donation
               </Button>
@@ -563,6 +629,7 @@ const Giving = ({ user }) => {
           </Form.Item>
         </Form>
       </Modal>
+      </div>
     </div>
   );
 };

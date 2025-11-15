@@ -18,6 +18,7 @@ import {
   Tabs,
   Empty,
   Spin,
+  Segmented,
 } from 'antd';
 import {
   TeamOutlined,
@@ -30,8 +31,11 @@ import {
   ClockCircleOutlined,
   EyeOutlined,
   SettingOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import { getColors } from '../styles/colors';
 import ApiClient from '../services/apiClient';
 import CommunityManagement from './CommunityManagement';
 
@@ -40,6 +44,8 @@ const { TextArea } = Input;
 
 const Communities = ({ user }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
   const [loading, setLoading] = useState(false);
   const [communities, setCommunities] = useState([]);
   const [myCommunities, setMyCommunities] = useState([]);
@@ -48,6 +54,7 @@ const Communities = ({ user }) => {
   const [createModal, setCreateModal] = useState(false);
   const [managementModal, setManagementModal] = useState(false);
   const [managementCommunity, setManagementCommunity] = useState(null);
+  const [activeTab, setActiveTab] = useState('All Communities');
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -171,133 +178,150 @@ const Communities = ({ user }) => {
     const hasJoinRequest = community.hasJoinRequest;
     const canJoin = community.canJoin !== false; // Default to true if not specified
     
-    const getJoinButtonProps = () => {
-      if (isJoined) {
-        return {
-          type: "default",
-          icon: <MessageOutlined />,
-          children: 'View',
-          onClick: () => viewCommunity(community)
-        };
+    const getCategoryIcon = () => {
+      if (community.category === 'Ministry' || community.type === 'Ministry') {
+        return { icon: <CheckCircleOutlined />, color: isDarkMode ? '#9b59b6' : '#8e44ad', text: 'Ministry' };
       }
-      
-      if (hasJoinRequest) {
-        return {
-          type: "default",
-          icon: <ClockCircleOutlined />,
-          children: 'Cancel Request',
-          onClick: () => handleCancelJoinRequest(community.id),
-          style: { backgroundColor: '#faad14', borderColor: '#faad14', color: 'white' }
-        };
+      if (community.category === 'Study' || community.type === 'Study') {
+        return { icon: <CheckCircleOutlined />, color: isDarkMode ? '#e67e22' : '#d35400', text: 'Study' };
       }
-      
-      if (isInvited) {
-        return {
-          type: "primary",
-          icon: <PlusOutlined />,
-          children: 'Accept Invitation',
-          onClick: () => handleJoinCommunity(community.id, community),
-          style: { backgroundColor: '#4A7C23', borderColor: '#4A7C23' }
-        };
-      }
-      
-      if (!canJoin && community.isPrivate) {
-        return {
-          type: "default",
-          icon: <MessageOutlined />,
-          children: 'Request to Join',
-          onClick: () => handleJoinCommunity(community.id, community)
-        };
-      }
-      
-      return {
-        type: "primary",
-        icon: <PlusOutlined />,
-        children: 'Join',
-        onClick: () => handleJoinCommunity(community.id, community)
-      };
+      return { icon: <CheckCircleOutlined />, color: isDarkMode ? '#9b59b6' : '#8e44ad', text: community.category || community.type || 'Community' };
     };
+
+    const categoryInfo = getCategoryIcon();
     
     return (
       <Card
         hoverable
-        cover={
-          <div 
+        style={{
+          background: isDarkMode ? '#1e1e1e' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+          borderRadius: '16px',
+          overflow: 'hidden'
+        }}
+        bodyStyle={{ padding: 0 }}
+      >
+        {/* Cover Image */}
+        <div 
+          style={{ 
+            height: 180,
+            background: community.image 
+              ? `url(${community.image}) center/cover`
+              : `linear-gradient(135deg, ${community.color || '#2d5a5a'} 0%, ${community.color || '#1a3a3a'} 100%)`,
+            position: 'relative',
+            borderRadius: '16px 16px 0 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          {!community.image && (
+            <TeamOutlined 
+              style={{ 
+                fontSize: '48px', 
+                color: 'rgba(255, 255, 255, 0.3)' 
+              }} 
+            />
+          )}
+        </div>
+
+        {/* Card Content */}
+        <div style={{ padding: '16px' }}>
+          {/* Community Name */}
+          <Title level={4} style={{ 
+            color: isDarkMode ? '#fff' : '#000',
+            marginBottom: '8px',
+            fontSize: '18px',
+            fontWeight: 700
+          }}>
+            {community.name}
+          </Title>
+
+          {/* Description */}
+          <Paragraph 
+            ellipsis={{ rows: 2 }}
             style={{ 
-              height: 200, 
-              background: `linear-gradient(45deg, ${community.color || '#1890ff'}, ${community.color || '#722ed1'})`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 24,
+              color: isDarkMode ? '#999' : '#666',
+              fontSize: '13px',
+              marginBottom: '12px',
+              minHeight: '40px'
             }}
           >
-            <TeamOutlined />
-          </div>
-        }
-        actions={showJoinButton ? [
-          <Button 
-            {...getJoinButtonProps()}
-            disabled={!user}
-          />,
-          ...(community.isLeader ? [
-            <Button
-              icon={<SettingOutlined />}
-              onClick={() => openManagement(community)}
-              title="Manage Community"
-            >
-              Manage
-            </Button>
-          ] : [])
-        ] : [
-          <Button 
-            type="primary"
-            icon={<MessageOutlined />}
-            onClick={() => viewCommunity(community)}
-          >
-            Open
-          </Button>
-        ]}
-      >
-        <Card.Meta
-          title={
-            <Space>
-              {community.name}
-              {community.isPrivate && (
-                <Tag color="orange" size="small">
-                  {community.inviteOnly ? 'Invite Only' : 'Private'}
-                </Tag>
-              )}
-              {isInvited && (
-                <Tag color="green" size="small">Invited</Tag>
-              )}
-              {hasJoinRequest && (
-                <Tag color="gold" size="small">Request Pending</Tag>
-              )}
-            </Space>
-          }
-          description={
-            <div>
-              <Paragraph ellipsis={{ rows: 2 }}>
-                {community.description}
-              </Paragraph>
-              <Space wrap>
-                <Tag color="blue">
-                  <UserOutlined /> {community.memberCount || 0} members
-                </Tag>
-                <Tag color="green">
-                  <EnvironmentOutlined /> {community.category || community.type}
-                </Tag>
-                {community.pendingJoinRequests > 0 && community.isLeader && (
-                  <Tag color="orange">
-                    <ClockCircleOutlined /> {community.pendingJoinRequests} pending requests
-                  </Tag>
-                )}
-              </Space>
+            {community.description}
+          </Paragraph>
+
+          {/* Member Count and Category */}
+          <Space size={12} style={{ marginBottom: '16px' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              color: isDarkMode ? '#999' : '#666',
+              fontSize: '12px'
+            }}>
+              <UserOutlined style={{ fontSize: '14px' }} />
+              <Text style={{ color: isDarkMode ? '#999' : '#666', fontSize: '12px' }}>
+                {community.memberCount || 0} members
+              </Text>
             </div>
-          }
-        />
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              fontSize: '12px'
+            }}>
+              {React.cloneElement(categoryInfo.icon, { 
+                style: { color: categoryInfo.color, fontSize: '14px' } 
+              })}
+              <Text style={{ color: categoryInfo.color, fontSize: '12px', fontWeight: 500 }}>
+                {categoryInfo.text}
+              </Text>
+            </div>
+          </Space>
+
+          {/* Join Button */}
+          {showJoinButton && (
+            <Button
+              block
+              size="large"
+              type="primary"
+              disabled={!user || isJoined}
+              onClick={() => !isJoined && handleJoinCommunity(community.id || community._id, community)}
+              style={{
+                borderRadius: '12px',
+                fontWeight: 600,
+                fontSize: '15px',
+                height: '48px',
+                background: isJoined 
+                  ? (isDarkMode ? '#2a4a4a' : '#4a9d9d')
+                  : (isDarkMode ? '#2d7a7a' : '#2d7a7a'),
+                borderColor: isJoined 
+                  ? (isDarkMode ? '#2a4a4a' : '#4a9d9d')
+                  : (isDarkMode ? '#2d7a7a' : '#2d7a7a')
+              }}
+            >
+              {isJoined ? 'Joined' : 'Join'}
+            </Button>
+          )}
+          {!showJoinButton && (
+            <Button
+              block
+              size="large"
+              type="primary"
+              onClick={() => viewCommunity(community)}
+              style={{
+                borderRadius: '12px',
+                fontWeight: 600,
+                fontSize: '15px',
+                height: '48px',
+                background: isDarkMode ? '#2d7a7a' : '#2d7a7a',
+                borderColor: isDarkMode ? '#2d7a7a' : '#2d7a7a'
+              }}
+            >
+              Open
+            </Button>
+          )}
+        </div>
       </Card>
     );
   };
@@ -308,28 +332,12 @@ const Communities = ({ user }) => {
 
   const AllCommunities = () => (
     <div>
-      <div style={{ marginBottom: 24, textAlign: 'center' }}>
-        <Title level={3}>Church Communities</Title>
-        <Paragraph type="secondary">
-          Join communities to connect with fellow believers and grow together
-        </Paragraph>
-        {/* {user && (
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModal(true)}
-          >
-            Create Community
-          </Button>
-        )} */}
-      </div>
-
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
           <Spin size="large" />
         </div>
       ) : (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]}>
           {Array.isArray(communities) && communities.length > 0 ? (
             communities.map(community => (
               <Col xs={24} sm={12} lg={8} key={community.id || community._id}>
@@ -351,15 +359,8 @@ const Communities = ({ user }) => {
 
   const MyCommunities = () => (
     <div>
-      <div style={{ marginBottom: 24, textAlign: 'center' }}>
-        <Title level={3}>My Communities</Title>
-        <Paragraph type="secondary">
-          Communities you're part of
-        </Paragraph>
-      </div>
-
       {Array.isArray(myCommunities) && myCommunities.length > 0 ? (
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]}>
           {myCommunities.map(community => (
             <Col xs={24} sm={12} lg={8} key={community.id || community._id}>
               <CommunityCard community={community} showJoinButton={false} />
@@ -370,8 +371,17 @@ const Communities = ({ user }) => {
         <Empty 
           description="You haven't joined any communities yet"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
+          style={{ padding: '50px 0' }}
         >
-          <Button type="primary" onClick={() => setActiveTab('all')}>
+          <Button 
+            type="primary" 
+            onClick={() => setActiveTab('All Communities')}
+            style={{
+              borderRadius: '8px',
+              background: isDarkMode ? '#2d7a7a' : '#2d7a7a',
+              borderColor: isDarkMode ? '#2d7a7a' : '#2d7a7a'
+            }}
+          >
             Explore Communities
           </Button>
         </Empty>
@@ -379,30 +389,61 @@ const Communities = ({ user }) => {
     </div>
   );
 
-  const [activeTab, setActiveTab] = useState('all');
-
-  const tabItems = [
-    {
-      key: 'all',
-      label: 'All Communities',
-      children: <AllCommunities />,
-    },
-    {
-      key: 'mine',
-      label: `My Communities${myCommunities.length > 0 ? ` (${myCommunities.length})` : ''}`,
-      children: <MyCommunities />,
-    },
-  ];
-
   return (
-    <div style={{ padding: '16px' }}>
-      <Tabs 
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={tabItems}
-        centered
-        size="large"
-      />
+    <div style={{ 
+      padding: 0,
+      background: isDarkMode ? '#121212' : '#f5f5f5',
+      minHeight: '100vh'
+    }}>
+      {/* Title, Subtitle, and Tabs */}
+      <div style={{ 
+        padding: '16px',
+        background: isDarkMode ? '#121212' : '#f5f5f5',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ marginBottom: 16, }}>
+          <Title 
+            level={3} 
+            style={{ 
+              color: isDarkMode ? '#ffffff' : '#000000',
+              marginBottom: 8 
+            }}
+          >
+            Church Communities
+          </Title>
+          <Paragraph 
+            style={{ 
+              color: isDarkMode ? '#999' : '#666',
+              fontSize: '14px',
+              marginBottom: 0
+            }}
+          >
+            Join communities to connect with fellow believers
+          </Paragraph>
+        </div>
+
+        {/* Segmented Control Tabs */}
+        <Segmented
+          value={activeTab}
+          onChange={setActiveTab}
+          options={['All Communities', 'My Communities']}
+          block
+          size="large"
+          style={{
+            background: isDarkMode ? '#1e1e1e' : '#ffffff',
+            padding: '4px',
+            borderRadius: '50px',
+            border: `1px solid ${isDarkMode ? '#2a2a2a' : '#d9d9d9'}`
+          }}
+        />
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '0 16px 16px' }}>
+        {activeTab === 'All Communities' ? <AllCommunities /> : <MyCommunities />}
+      </div>
 
       {/* Create Community Modal */}
       <Modal

@@ -18,7 +18,9 @@ import {
   GiftOutlined,
   FormOutlined,
   SunOutlined,
-  MoonOutlined
+  MoonOutlined,
+  FolderOutlined,
+  EllipsisOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -78,18 +80,18 @@ const Layout = ({ children }) => {
       label: 'Connect',
     },
     {
-      key: '/media',
-      icon: <VideoCameraOutlined />,
-      label: 'Watch',
-    },
-    {
       key: '/giving',
       icon: <GiftOutlined />,
       label: 'Give',
     },
     {
+      key: '/resources',
+      icon: <FolderOutlined />,
+      label: 'Resources',
+    },
+    {
       key: '/more',
-      icon: <MoreOutlined />,
+      icon: <EllipsisOutlined />,
       label: 'More',
     },
   ];
@@ -100,6 +102,7 @@ const Layout = ({ children }) => {
       const moreItems = [
         { path: '/events', label: 'Events', icon: <CalendarOutlined /> },
         { path: '/watch-live', label: 'Watch Live', icon: <PlayCircleOutlined /> },
+        { path: '/media', label: 'Media', icon: <VideoCameraOutlined /> },
         { path: '/blog', label: 'Blog', icon: <FileTextOutlined /> },
         { path: '/devotionals', label: 'Devotionals', icon: <CompassOutlined /> },
         { path: '/requests', label: 'Request Forms', icon: <FormOutlined /> },
@@ -110,6 +113,9 @@ const Layout = ({ children }) => {
       
       // For now, navigate to events as default
       navigate('/events');
+    } else if (path === '/resources') {
+      // Navigate to media or create resources page
+      navigate('/media');
     } else {
       navigate(path);
     }
@@ -117,7 +123,7 @@ const Layout = ({ children }) => {
 
   const BottomNavItem = ({ item }) => {
     const isActive = location.pathname === item.key || 
-                    (item.key === '/more' && !['/', '/communities', '/media', '/giving'].includes(location.pathname));
+                    (item.key === '/more' && !['/', '/communities', '/giving', '/resources'].includes(location.pathname));
     
     return (
       <div
@@ -126,20 +132,20 @@ const Layout = ({ children }) => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '8px 4px',
+          padding: '6px 4px',
           cursor: 'pointer',
-          color: isActive ? colors.primary : colors.textSecondary,
-          fontSize: '12px',
+          color: isActive ? (isDarkMode ? '#4a9d9d' : '#2d7a7a') : (isDarkMode ? '#888' : '#666'),
+          fontSize: '11px',
           flex: 1,
           transition: 'color 0.3s',
-          fontWeight: isActive ? 'bold' : 'normal'
+          fontWeight: isActive ? 600 : 400
         }}
         onClick={() => handleBottomNavClick(item.key)}
       >
         <div style={{ 
-          fontSize: '20px', 
-          marginBottom: '4px',
-          color: isActive ? colors.primary : colors.textSecondary
+          fontSize: '22px', 
+          marginBottom: '2px',
+          color: isActive ? (isDarkMode ? '#4a9d9d' : '#2d7a7a') : (isDarkMode ? '#888' : '#666')
         }}>
           {item.icon}
         </div>
@@ -163,7 +169,7 @@ const Layout = ({ children }) => {
     }}>
       {/* Mobile Header */}
       <Header style={{ 
-        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`, 
+        background: isDarkMode ? '#000000' : '#ffffff',
         padding: '0 16px',
         display: 'flex',
         justifyContent: 'space-between',
@@ -171,7 +177,8 @@ const Layout = ({ children }) => {
         position: 'sticky',
         top: 0,
         zIndex: 1000,
-        boxShadow: `0 2px 12px rgba(0, 0, 0, 0.1)`,
+        boxShadow: 'none',
+        borderBottom: isDarkMode ? '1px solid #1a1a1a' : '1px solid #e8e8e8',
         width: '100%',
         maxWidth: '100vw',
         margin: 0,
@@ -179,7 +186,7 @@ const Layout = ({ children }) => {
       }}>
         {/* App Title */}
         <div style={{ 
-          color: colors.textWhite, 
+          color: isDarkMode ? '#ffffff' : '#000000',
           display: 'flex', 
           alignItems: 'center', 
           gap: '12px' 
@@ -188,32 +195,37 @@ const Layout = ({ children }) => {
             src="/images/sycamore-logo.svg" 
             alt="Sycamore Church Logo" 
             style={{ 
-              height: '32px', 
+              height: '28px', 
               width: 'auto',
-              filter: 'brightness(0) invert(1)' // Makes SVG white
+              filter: isDarkMode ? 'brightness(0) invert(1)' : 'none'
             }} 
           />
           <h2 style={{ 
             margin: 0, 
-            color: colors.textWhite, 
-            fontSize: '18px',
-            fontWeight: 'bold'
+            color: isDarkMode ? '#ffffff' : '#000000',
+            fontSize: '16px',
+            fontWeight: 700,
+            letterSpacing: '0.5px'
           }}>
-            Sycamore Church
+            SYCAMORE
           </h2>
         </div>
 
         {/* User Actions */}
-        <Space>
+        <Space size={8}>
           {/* Theme Toggle */}
           <Button
             type="text"
             icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
             onClick={toggleTheme}
             style={{ 
-              color: colors.textWhite,
+              color: isDarkMode ? '#ffffff' : '#000000',
               border: 'none',
-              backgroundColor: 'transparent'
+              backgroundColor: 'transparent',
+              fontSize: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           />
@@ -230,25 +242,28 @@ const Layout = ({ children }) => {
                 size="small"
                 style={{ 
                   cursor: 'pointer', 
-                  border: `2px solid ${colors.textWhite}`,
-                  backgroundColor: colors.textWhite,
-                  color: colors.primary
+                  border: `2px solid ${isDarkMode ? '#ffffff' : '#000000'}`,
+                  backgroundColor: isDarkMode ? '#1a1a1a' : '#f5f5f5',
+                  color: isDarkMode ? '#ffffff' : '#000000'
                 }}
               />
             </Dropdown>
           ) : (
             <Button 
-              type="primary" 
+              type="default"
               size="small"
-              ghost
               onClick={() => setAuthModalVisible(true)}
               style={{ 
-                border: `1px solid ${colors.textWhite}`,
-                color: colors.textWhite,
-                fontWeight: 'bold'
+                border: `1px solid ${isDarkMode ? '#333' : '#d9d9d9'}`,
+                background: isDarkMode ? '#1a1a1a' : '#ffffff',
+                color: isDarkMode ? '#ffffff' : '#000000',
+                fontWeight: 500,
+                borderRadius: '6px',
+                padding: '4px 16px',
+                fontSize: '14px'
               }}
             >
-              SIGN IN
+              Sign in
             </Button>
           )}
         </Space>
@@ -275,12 +290,12 @@ const Layout = ({ children }) => {
         bottom: 0,
         left: 0,
         right: 0,
-        background: colors.background,
-        borderTop: `1px solid ${colors.mint}`,
+        background: isDarkMode ? '#000000' : '#ffffff',
+        borderTop: `1px solid ${isDarkMode ? '#1a1a1a' : '#e8e8e8'}`,
         display: 'flex',
-        padding: '8px 0',
+        padding: '4px 0 6px',
         zIndex: 1000,
-        boxShadow: `0 -2px 8px ${colors.darkBlue}20`
+        boxShadow: 'none'
       }}>
         {bottomNavItems.map(item => (
           <BottomNavItem key={item.key} item={item} />
