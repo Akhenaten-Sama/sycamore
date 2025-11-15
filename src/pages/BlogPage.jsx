@@ -11,11 +11,13 @@ import {
   EditOutlined
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
+import { useTheme } from '../contexts/ThemeContext';
 import colors from '../styles/colors';
 
 const { Title, Paragraph, Text } = Typography;
 
 const BlogPage = () => {
+  const { isDarkMode } = useTheme();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,17 +89,19 @@ const BlogPage = () => {
     <Card
       hoverable
       style={{
-        backgroundColor: colors.cardBackground,
-        border: `1px solid ${colors.mint}`,
+        background: isDarkMode ? '#1e1e1e' : '#ffffff',
+        border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
         borderRadius: '12px',
         overflow: 'hidden'
       }}
+      bodyStyle={{ padding: '12px' }}
       cover={
         <div 
           style={{ 
-            height: 200, 
+            height: 180, 
             background: `url(${post.image}) center/cover`,
-            position: 'relative'
+            position: 'relative',
+            borderRadius: '12px 12px 0 0'
           }}
         >
           <div style={{
@@ -107,10 +111,12 @@ const BlogPage = () => {
           }}>
             <Tag 
               style={{ 
-                backgroundColor: colors.primary,
-                color: colors.textWhite,
+                background: isDarkMode ? '#2d7a7a' : '#2d7a7a',
+                color: '#fff',
                 border: 'none',
-                borderRadius: '16px'
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600
               }}
             >
               {post.category}
@@ -121,76 +127,97 @@ const BlogPage = () => {
             bottom: 8,
             left: 8,
             background: `rgba(0,0,0,0.7)`,
-            color: colors.textWhite,
+            color: '#fff',
             padding: '4px 8px',
-            borderRadius: 4,
+            borderRadius: '6px',
             fontSize: '12px'
           }}>
             {post.readTime}
           </div>
         </div>
       }
-      actions={[
+    >
+      <Title 
+        level={5} 
+        style={{ 
+          color: isDarkMode ? '#fff' : '#000',
+          fontSize: '15px',
+          fontWeight: 600,
+          marginBottom: '8px'
+        }}
+      >
+        {post.title}
+      </Title>
+      
+      <Paragraph 
+        ellipsis={{ rows: 2 }}
+        style={{ 
+          color: isDarkMode ? '#999' : '#666',
+          fontSize: '13px',
+          marginBottom: '12px'
+        }}
+      >
+        {post.content}
+      </Paragraph>
+
+      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <Space size={4}>
+          <Avatar size={24} icon={<UserOutlined />} />
+          <Text style={{ fontSize: '12px', color: isDarkMode ? '#999' : '#666' }}>
+            {post.author}
+          </Text>
+        </Space>
+        <Text style={{ fontSize: '12px', color: isDarkMode ? '#999' : '#666' }}>
+          <CalendarOutlined /> {new Date(post.date).toLocaleDateString()}
+        </Text>
+      </Space>
+
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        paddingTop: '8px',
+        borderTop: `1px solid ${isDarkMode ? '#2a2a2a' : '#f0f0f0'}`
+      }}>
         <Button 
           type="text" 
+          size="small"
           icon={<HeartOutlined />}
-          style={{ color: colors.error }}
-        >
-          {post.likes}
-        </Button>,
-        <Button 
-          type="text" 
-          icon={<MessageOutlined />}
-          style={{ color: colors.primary }}
-        >
-          {post.comments}
-        </Button>,
-        <Button 
-          type="primary"
           style={{
-            backgroundColor: colors.success,
-            borderColor: colors.success
+            color: isDarkMode ? '#999' : '#666',
+            fontSize: '12px',
+            padding: '4px 8px',
+            height: 'auto'
           }}
         >
-          Read More
+          {post.likes}
         </Button>
-      ]}
-    >
-      <Card.Meta
-        title={
-          <span style={{ color: colors.textPrimary }}>
-            {post.title}
-          </span>
-        }
-        description={
-          <div>
-            <Paragraph 
-              ellipsis={{ rows: 3 }} 
-              style={{ marginBottom: 12, color: colors.textSecondary }}
-            >
-              {post.content}
-            </Paragraph>
-            <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <Space>
-                <Avatar 
-                  size="small" 
-                  icon={<UserOutlined />}
-                  style={{ backgroundColor: colors.primary }}
-                />
-                <Text strong style={{ color: colors.textPrimary }}>
-                  {post.author}
-                </Text>
-              </Space>
-              <Space>
-                <CalendarOutlined style={{ color: colors.warning }} />
-                <Text style={{ color: colors.textSecondary }}>
-                  {new Date(post.date).toLocaleDateString()}
-                </Text>
-              </Space>
-            </Space>
-          </div>
-        }
-      />
+        <Button 
+          type="text" 
+          size="small"
+          icon={<MessageOutlined />}
+          style={{
+            color: isDarkMode ? '#999' : '#666',
+            fontSize: '12px',
+            padding: '4px 8px',
+            height: 'auto'
+          }}
+        >
+          {post.comments}
+        </Button>
+        <Button 
+          type="text" 
+          size="small"
+          icon={<EyeOutlined />}
+          style={{
+            color: isDarkMode ? '#999' : '#666',
+            fontSize: '12px',
+            padding: '4px 8px',
+            height: 'auto'
+          }}
+        >
+          Read
+        </Button>
+      </div>
     </Card>
   );
 
@@ -209,31 +236,55 @@ const BlogPage = () => {
   }
 
   return (
-    <div style={{ background: colors.background, minHeight: '100vh', padding: '16px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ color: colors.textPrimary }}>
-          <BookOutlined style={{ marginRight: '8px', color: colors.primary }} />
+    <div style={{ 
+      background: isDarkMode ? '#121212' : '#f5f5f5', 
+      minHeight: '100vh', 
+      padding: 0 
+    }}>
+      {/* Header */}
+      <div style={{ 
+        padding: '16px',
+        background: isDarkMode ? '#121212' : '#f5f5f5'
+      }}>
+        <Title 
+          level={3} 
+          style={{ 
+            color: isDarkMode ? '#ffffff' : '#000000',
+            marginBottom: 8,
+            fontSize: '20px',
+            fontWeight: 700
+          }}
+        >
+          <BookOutlined style={{ marginRight: '8px' }} />
           Church Blog
         </Title>
-        <Paragraph style={{ color: colors.textSecondary }}>
+        <Paragraph 
+          style={{ 
+            color: isDarkMode ? '#999' : '#666',
+            fontSize: '14px',
+            marginBottom: 0
+          }}
+        >
           Inspiring articles, teachings, and reflections from our church community
         </Paragraph>
       </div>
 
-      {posts.length > 0 ? (
-        <Row gutter={[16, 16]}>
-          {posts.map(post => (
-            <Col xs={24} sm={12} lg={8} key={post.id}>
-              <BlogCard post={post} />
-            </Col>
-          ))}
-        </Row>
-      ) : (
-        <Empty 
-          description="No blog posts found" 
-          style={{ color: colors.textSecondary }}
-        />
-      )}
+      <div style={{ padding: '0 16px 16px' }}>
+        {posts.length > 0 ? (
+          <Row gutter={[16, 16]}>
+            {posts.map(post => (
+              <Col xs={24} sm={12} lg={8} key={post.id}>
+                <BlogCard post={post} />
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          <Empty 
+            description="No blog posts found" 
+            style={{ color: isDarkMode ? '#999' : '#666' }}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Row, Col, Card, Button, Space, Tag, Image } from 'antd';
+import { Typography, Row, Col, Card, Button, Spin } from 'antd';
 import { 
   CalendarOutlined, 
-  UserOutlined, 
-  FileTextOutlined, 
-  TeamOutlined,
-  VideoCameraOutlined,
-  CompassOutlined,
+  BookOutlined,
+  EditOutlined,
+  FormOutlined,
   GiftOutlined,
-  ArrowRightOutlined,
-  PlayCircleOutlined,
-  CheckCircleOutlined,
-  PlusOutlined,
   HeartOutlined,
-  BulbOutlined,
-  ClockCircleOutlined,
-  FormOutlined
+  UsergroupAddOutlined,
+  MessageOutlined,
+  TrophyOutlined,
+  FileTextOutlined,
+  RightOutlined,
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,567 +27,770 @@ const HomePage = () => {
   const { user } = useAuth();
   const { isDarkMode } = useTheme();
   const colors = getColors(isDarkMode);
-  const [latestMessage, setLatestMessage] = useState(null);
-  const [loadingMessage, setLoadingMessage] = useState(true);
+  const [latestSermons, setLatestSermons] = useState([]);
+  const [latestBlogs, setLatestBlogs] = useState([]);
+  const [liveSermon, setLiveSermon] = useState(null);
+  const [loadingSermons, setLoadingSermons] = useState(true);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [loadingLive, setLoadingLive] = useState(true);
 
-  const now = new Date();
-  const isSunday = now.getDay() === 0; // Sunday is day 0
-  
-  const currentDate = now.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
-  // Load latest message on component mount
   useEffect(() => {
-    loadLatestMessage();
+    loadLatestSermons();
+    loadLatestBlogs();
+    loadLiveSermon();
   }, []);
 
-  const loadLatestMessage = async () => {
+  const loadLiveSermon = async () => {
     try {
-      setLoadingMessage(true);
-      const response = await ApiClient.getMedia('?type=video&limit=1');
-      const mediaData = response?.data || response || [];
-      if (mediaData.length > 0) {
-        setLatestMessage(mediaData[0]);
+      setLoadingLive(true);
+      // Check if today is Sunday
+      const today = new Date();
+      const isSunday = today.getDay() === 0;
+      
+      if (isSunday) {
+        // Try to fetch live sermon
+        const response = await ApiClient.getMedia('?limit=50');
+        if (response?.data) {
+          // Find a sermon marked as live
+          const live = response.data.find(item => item.isLive && item.category === 'sermon');
+          setLiveSermon(live || null);
+        }
       }
     } catch (error) {
-      console.error('Failed to load latest message:', error);
+      console.error('Failed to load live sermon:', error);
     } finally {
-      setLoadingMessage(false);
+      setLoadingLive(false);
     }
   };
 
-  // Function to get appropriate greeting based on time and day
-  const getGreeting = () => {
-    if (isSunday && user) {
-      return `Welcome to church, ${user.firstName}! 🙏`;
-    } else if (user) {
-      const hour = now.getHours();
-      if (hour < 12) return `Good morning, ${user.firstName}`;
-      if (hour < 17) return `Good afternoon, ${user.firstName}`;
-      return `Good evening, ${user.firstName}`;
-    } else {
-      return isSunday ? 'Welcome to Service!' : 'Welcome to Sycamore Church';
+  const loadLatestSermons = async () => {
+    try {
+      setLoadingSermons(true);
+      const response = await ApiClient.getMedia('?limit=50');
+      if (response?.data) {
+        // Filter for sermons only using category field
+        const sermons = response.data
+          .filter(item => item.category === 'sermon')
+          .slice(0, 2);
+        setLatestSermons(sermons);
+      }
+    } catch (error) {
+      console.error('Failed to load sermons:', error);
+    } finally {
+      setLoadingSermons(false);
+    }
+  };
+
+  const loadLatestBlogs = async () => {
+    try {
+      setLoadingBlogs(true);
+      const response = await ApiClient.request('/mobile/blog?limit=2');
+      if (response?.data) {
+        setLatestBlogs(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load blogs:', error);
+    } finally {
+      setLoadingBlogs(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch {
+      return '';
+    }
+  };
+
+  const formatTimeAgo = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+      
+      if (diffInMinutes < 1) return 'just now';
+      if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+      const diffInHours = Math.floor(diffInMinutes / 60);
+      if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+      return formatDate(dateString);
+    } catch {
+      return '';
     }
   };
 
   return (
-    <div style={{ 
-      background: colors.background, 
+    <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
+      <div style={{ 
+      background: isDarkMode ? '#121212' : '#f5f5f5',
       minHeight: '100vh',
-      width: '100%',
-      margin: 0,
       padding: 0
     }}>
-      {/* Date and Greeting */}
-      <div style={{ 
-        padding: '20px 16px', 
-        background: isSunday 
-          ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
-          : `linear-gradient(135deg, ${colors.darkBlue} 0%, ${colors.teal} 100%)`,
-        color: colors.textWhite
+      {/* Hero Section */}
+      <div style={{
+        background: isDarkMode ? '#1e1e1e' : '#ffffff',
+        padding: '40px 16px 24px',
+     
+        borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
       }}>
-        <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>
-          {currentDate}
+        <div style={{ fontSize: '32px', marginBottom: '12px' }}>👋</div>
+        <div style={{ fontSize: '25px', marginBottom: '12px' }}>Welcome to Sycamore Church</div>
+        <Text style={{ 
+          fontSize: '13px',
+          color: isDarkMode ? '#888' : '#666',
+          fontWeight: 300,
+          letterSpacing: '0.3px'
+        }}>
+          It's my church as it's your church
         </Text>
-        <Title level={3} style={{ color: colors.textWhite, margin: '4px 0 0 0' }}>
-          {getGreeting()}
-        </Title>
-        {isSunday && (
-          <Paragraph style={{ 
-            color: 'rgba(255, 255, 255, 0.9)', 
-            margin: '8px 0 0 0',
-            fontSize: '14px'
+      </div>
+
+      {/* Sundays at Sycamore Section - Only show on Sundays or if there's a live sermon */}
+      {(new Date().getDay() === 0 || liveSermon) && (
+        <div style={{ padding: '20px 16px' }}>
+          <Title level={3} style={{ 
+            color: isDarkMode ? '#fff' : '#000',
+            marginBottom: '16px',
+            fontSize: '18px',
+            fontWeight: 700
           }}>
-            Join us for worship service today! 🎵
-          </Paragraph>
-        )}
-      </div>
+            Sundays at Sycamore
+          </Title>
 
-      {/* Main Action Buttons */}
-      <div style={{ padding: '16px' }}>
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Button 
-              style={{
-                height: '80px',
-                width: '100%',
-                background: colors.primary,
-                border: 'none',
-                borderRadius: '12px',
-                color: colors.textWhite,
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 4px 20px rgba(10, 147, 150, 0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
+          {loadingLive ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <Spin />
+            </div>
+          ) : liveSermon ? (
+            <Card
+              hoverable
               onClick={() => navigate('/media')}
-            >
-              <PlayCircleOutlined style={{ fontSize: '28px', marginBottom: '6px' }} />
-              Watch Live
-            </Button>
-          </Col>
-          <Col span={12}>
-            <Button 
               style={{
-                height: '80px',
-                width: '100%',
-                background: colors.secondary,
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+                borderRadius: '12px',
+                overflow: 'hidden'
+              }}
+              bodyStyle={{ padding: 0 }}
+            >
+              {/* Live Badge and Cover */}
+              <div style={{
+                height: '180px',
+                background: liveSermon.thumbnail 
+                  ? `url(${liveSermon.thumbnail}) center/cover`
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                position: 'relative'
+              }}>
+                {/* LIVE Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: '12px',
+                  left: '12px',
+                  background: '#ff4444',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  animation: 'pulse 2s infinite'
+                }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#fff',
+                    animation: 'blink 1s infinite'
+                  }}/>
+                  Live
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{ padding: '16px' }}>
+                <Title level={4} style={{
+                  color: isDarkMode ? '#fff' : '#000',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  marginBottom: '8px'
+                }}>
+                  {liveSermon.title}
+                </Title>
+                <Text style={{
+                  color: isDarkMode ? '#999' : '#666',
+                  fontSize: '13px',
+                  display: 'block',
+                  marginBottom: '12px'
+                }}>
+                  {liveSermon.speaker && `${liveSermon.speaker} • `}
+                  {liveSermon.views || 3} Watching • Started {formatTimeAgo(liveSermon.createdAt)}
+                </Text>
+                <Button 
+                  type="primary"
+                  icon={<PlayCircleOutlined />}
+                  block
+                  style={{
+                    background: isDarkMode ? '#2d7a7a' : '#2d7a7a',
+                    borderColor: isDarkMode ? '#2d7a7a' : '#2d7a7a',
+                    height: '40px',
+                    borderRadius: '8px',
+                    fontWeight: 600
+                  }}
+                >
+                  Watch Live Now
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <Card
+              style={{
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+                borderRadius: '12px',
+                textAlign: 'center',
+                padding: '30px 20px'
+              }}
+            >
+              <Text style={{ color: isDarkMode ? '#999' : '#666', fontSize: '14px' }}>
+                No live service at the moment. Check back during service times!
+              </Text>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Grow in Faith Section */}
+      <div style={{ padding: '20px 16px' }}>
+        <Title level={3} style={{ 
+          color: isDarkMode ? '#fff' : '#000',
+          marginBottom: '16px',
+          fontSize: '18px',
+          fontWeight: 700
+        }}>
+          Grow in Faith
+        </Title>
+        
+        <Row gutter={[8, 8]}>
+          <Col xs={8}>
+            <Card
+              hoverable
+              onClick={() => navigate('/devotionals')}
+              style={{
+                background: isDarkMode 
+                  ? 'linear-gradient(rgba(26, 58, 58, 0.85), rgba(26, 58, 58, 0.85)), url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop") center/cover'
+                  : 'linear-gradient(rgba(45, 90, 90, 0.75), rgba(45, 90, 90, 0.75)), url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop") center/cover',
                 border: 'none',
                 borderRadius: '12px',
-                color: colors.textWhite,
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 4px 20px rgba(0, 95, 115, 0.2)',
+                overflow: 'hidden',
+                height: '160px',
+                position: 'relative'
+              }}
+              bodyStyle={{ 
+                padding: '12px',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'space-between',
+                position: 'relative',
+                zIndex: 1
               }}
-              onClick={() => navigate('/communities')}
             >
-              <TeamOutlined style={{ fontSize: '28px', marginBottom: '6px' }} />
-              Connect
-            </Button>
-          </Col>
-        </Row>
-        
-        <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-          <Col span={12}>
-            <Button 
-              style={{
-                height: '80px',
-                width: '100%',
-                background: colors.cardBackground,
-                border: `2px solid ${colors.primary}`,
-                borderRadius: '12px',
-                color: colors.primary,
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={() => navigate('/giving')}
-            >
-              <GiftOutlined style={{ fontSize: '28px', marginBottom: '6px' }} />
-              Give
-            </Button>
-          </Col>
-          <Col span={12}>
-            <Button 
-              style={{
-                height: '80px',
-                width: '100%',
-                background: colors.cardBackground,
-                border: `2px solid ${colors.secondary}`,
-                borderRadius: '12px',
-                color: colors.secondary,
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={() => navigate('/requests')}
-            >
-              <FormOutlined style={{ fontSize: '28px', marginBottom: '6px' }} />
-              Requests
-            </Button>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Daily Devotional Hero */}
-      <div style={{ padding: '0 16px 16px' }}>
-        <Card 
-          style={{ 
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: `2px solid ${colors.mint}`,
-            background: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80) center/cover`,
-            color: colors.textWhite,
-            minHeight: '200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 8px 24px ${colors.darkBlue}25`
-          }}
-          bodyStyle={{ 
-            background: 'transparent',
-            textAlign: 'center',
-            padding: '32px 24px'
-          }}
-        >
-          <div>
-            <CompassOutlined style={{ 
-              fontSize: '56px', 
-              color: colors.textWhite, 
-              marginBottom: '16px',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-            }} />
-            <Title level={3} style={{ 
-              color: colors.textWhite, 
-              marginBottom: '8px',
-              textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-            }}>
-              Daily Devotional
-            </Title>
-            <Paragraph style={{ 
-              color: colors.textWhite, 
-              marginBottom: '20px',
-              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-              fontSize: '16px'
-            }}>
-              Start your day with God's word and grow in faith
-            </Paragraph>
-            <Button 
-              type="primary"
-              size="large"
-              style={{
-                background: colors.primary,
-                borderColor: colors.primary,
-                borderRadius: '30px',
-                padding: '12px 32px',
-                height: 'auto',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                boxShadow: '0 4px 12px rgba(10, 147, 150, 0.4)'
-              }}
-              onClick={() => navigate('/devotionals')}
-            >
-              Read Today's Devotional
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick Access */}
-      <div style={{ padding: '0 16px 24px' }}>
-        <Title level={4} style={{ 
-          marginBottom: '16px', 
-          color: colors.textPrimary,
-          fontWeight: '600'
-        }}>
-          Quick Access
-        </Title>
-        
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Card 
-              style={{ 
-                borderRadius: '12px',
-                border: `1px solid ${colors.mint}`,
-                backgroundColor: colors.cardBackground,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-              }}
-              bodyStyle={{ padding: '20px' }}
-              onClick={() => navigate('/requests')}
-              hoverable
-            >
-              <div style={{ textAlign: 'center' }}>
-                <HeartOutlined style={{ 
-                  fontSize: '32px', 
-                  color: colors.primary, 
-                  marginBottom: '12px',
-                  display: 'block'
-                }} />
-                <Text style={{ 
-                  color: colors.textPrimary, 
-                  fontWeight: '600',
-                  display: 'block',
-                  fontSize: '15px'
-                }}>
-                  Prayer Request
-                </Text>
-                <Text style={{ 
-                  color: colors.textSecondary,
-                  fontSize: '12px'
-                }}>
-                  Submit your prayer needs
-                </Text>
-              </div>
-            </Card>
-          </Col>
-          <Col span={12}>
-            <Card 
-              style={{ 
-                borderRadius: '12px',
-                border: `1px solid ${colors.mint}`,
-                backgroundColor: colors.cardBackground,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-              }}
-              bodyStyle={{ padding: '20px' }}
-              onClick={() => navigate('/events')}
-              hoverable
-            >
-              <div style={{ textAlign: 'center' }}>
-                <CalendarOutlined style={{ 
-                  fontSize: '32px', 
-                  color: colors.secondary, 
-                  marginBottom: '12px',
-                  display: 'block'
-                }} />
-                <Text style={{ 
-                  color: colors.textPrimary, 
-                  fontWeight: '600',
-                  display: 'block',
-                  fontSize: '15px'
-                }}>
-                  Events
-                </Text>
-                <Text style={{ 
-                  color: colors.textSecondary,
-                  fontSize: '12px'
-                }}>
-                  Join us this week
-                </Text>
-              </div>
-            </Card>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Latest Message Section */}
-      <div style={{ padding: '0 16px 16px' }}>
-        <Title level={4} style={{ 
-          marginBottom: '12px', 
-          color: colors.textPrimary,
-          fontWeight: 'bold'
-        }}>
-          Latest Message
-        </Title>
-        
-        <Row gutter={[12, 12]} style={{ marginBottom: '16px' }}>
-          <Col span={8}>
-            <Button 
-              style={{
-                height: '44px',
-                width: '100%',
-                background: colors.cardBackground,
-                border: `1px solid ${colors.primary}`,
-                borderRadius: '8px',
-                color: colors.primary,
-                fontSize: '12px',
-                fontWeight: '600'
-              }}
-              onClick={() => navigate('/sermon-notes')}
-            >
-              <FileTextOutlined /> Notes
-            </Button>
-          </Col>
-          <Col span={8}>
-            <Button 
-              style={{
-                height: '44px',
-                width: '100%',
-                background: colors.cardBackground,
-                border: `1px solid ${colors.secondary}`,
-                borderRadius: '8px',
-                color: colors.secondary,
-                fontSize: '12px',
-                fontWeight: '600'
-              }}
-              onClick={() => navigate('/blog')}
-            >
-              <BulbOutlined /> Blog
-            </Button>
-          </Col>
-          <Col span={8}>
-            <Button 
-              style={{
-                height: '44px',
-                width: '100%',
-                background: colors.cardBackground,
-                border: `1px solid ${colors.primary}`,
-                borderRadius: '8px',
-                color: colors.primary,
-                fontSize: '12px',
-                fontWeight: '600'
-              }}
-              onClick={() => navigate('/bible')}
-            >
-              <CompassOutlined /> Bible
-            </Button>
-          </Col>
-        </Row>
-
-        {/* Latest Message Card */}
-        {loadingMessage ? (
-          <Card loading style={{ marginBottom: '16px' }} />
-        ) : latestMessage ? (
-          <Card 
-            style={{ 
-              borderRadius: '16px',
-              overflow: 'hidden',
-              border: `1px solid ${colors.mint}`,
-              marginBottom: '16px',
-              backgroundColor: colors.cardBackground,
-              boxShadow: `0 4px 12px ${colors.darkBlue}10`
-            }}
-            bodyStyle={{ padding: 0 }}
-          >
-            <div style={{ 
-              background: latestMessage.thumbnail 
-                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(${latestMessage.thumbnail}) center/cover`
-                : `linear-gradient(135deg, ${colors.primary}88, ${colors.secondary}88)`,
-              height: '200px',
-              display: 'flex',
-              alignItems: 'flex-end',
-              color: colors.textWhite,
-              padding: '24px',
-              position: 'relative',
-              cursor: 'pointer'
-            }}
-            onClick={() => navigate('/media')}
-            >
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: 48,
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                }}
-              >
-                <PlayCircleOutlined />
-              </div>
               <div>
-                <Tag color={colors.success} style={{ marginBottom: '8px' }}>
-                  <ClockCircleOutlined /> {latestMessage.date ? new Date(latestMessage.date).toLocaleDateString() : 'Recent'}
-                </Tag>
-                <Title level={4} style={{ color: colors.textWhite, marginBottom: '4px' }}>
-                  {latestMessage.title}
+                <Title level={4} style={{ 
+                  color: '#fff',
+                  fontSize: '14px',
+                  marginBottom: '0',
+                  fontWeight: 700,
+                  lineHeight: '1.3',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }}>
+                  Daily<br/>Devotionals
                 </Title>
-                <Text style={{ color: 'rgba(255,255,255,0.9)' }}>
-                  {latestMessage.speaker && `${latestMessage.speaker} • `}
-                  {latestMessage.description || 'Watch the latest message from our church'}
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#ddd' : '#e8e8e8', 
+                fontSize: '11px', 
+                fontWeight: 400,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              }}>
+                Day 5/Week 22
+              </Text>
+            </Card>
+          </Col>
+
+          <Col xs={8}>
+            <Card
+              hoverable
+              onClick={() => navigate('/bible')}
+              style={{
+                background: isDarkMode 
+                  ? 'linear-gradient(rgba(42, 36, 16, 0.85), rgba(42, 36, 16, 0.85)), url("https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=300&fit=crop") center/cover'
+                  : 'linear-gradient(rgba(74, 64, 32, 0.75), rgba(74, 64, 32, 0.75)), url("https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=300&fit=crop") center/cover',
+                border: 'none',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                height: '160px',
+                position: 'relative'
+              }}
+              bodyStyle={{ 
+                padding: '12px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+                zIndex: 1
+              }}
+            >
+              <div>
+                <Title level={4} style={{ 
+                  color: '#fff',
+                  fontSize: '14px',
+                  marginBottom: '0',
+                  fontWeight: 700,
+                  lineHeight: '1.3',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }}>
+                  The Holy<br/>Bible
+                </Title>
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#ddd' : '#e8e8e8', 
+                fontSize: '11px', 
+                fontWeight: 400,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              }}>
+                1 John 3:2
+              </Text>
+            </Card>
+          </Col>
+
+          <Col xs={8}>
+            <Card
+              hoverable
+              onClick={() => navigate('/sermon-notes')}
+              style={{
+                background: isDarkMode ? '#1a3d3d' : '#4a9d9d',
+                border: 'none',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                height: '160px'
+              }}
+              bodyStyle={{ 
+                padding: '12px',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <Title level={4} style={{ 
+                  color: '#fff',
+                  fontSize: '14px',
+                  marginBottom: '0',
+                  fontWeight: 700,
+                  lineHeight: '1.3'
+                }}>
+                  Notes
+                </Title>
+                <Text style={{ 
+                  color: isDarkMode ? '#bbb' : '#e0f2f2', 
+                  fontSize: '11px', 
+                  fontWeight: 400, 
+                  marginTop: '4px', 
+                  display: 'block' 
+                }}>
+                  ✍️ Take notes...
                 </Text>
               </div>
-            </div>
-            <div style={{ padding: '16px' }}>
-              <Button 
-                type="primary" 
-                icon={<PlayCircleOutlined />}
-                style={{
-                  background: colors.primary,
-                  borderColor: colors.primary,
-                  marginRight: '8px'
-                }}
-                onClick={() => navigate('/media')}
-              >
-                Watch
-              </Button>
-              <Button 
-                icon={<FileTextOutlined />}
-                onClick={() => navigate('/sermon-notes')}
-              >
-                Notes
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <Card 
-            style={{ 
-              borderRadius: '16px',
-              marginBottom: '16px',
-              backgroundColor: colors.cardBackground,
-              textAlign: 'center'
-            }}
-          >
-            <Text type="secondary">No messages available</Text>
-            <br />
-            <Button type="link" onClick={() => navigate('/media')}>
-              View Media Gallery
-            </Button>
-          </Card>
-        )}
+            </Card>
+          </Col>
+        </Row>
       </div>
 
-      {/* Quick Links */}
-      <div style={{ padding: '0 16px 24px' }}>
-        <Title level={4} style={{ 
-          marginBottom: '12px', 
-          color: colors.textPrimary,
-          fontWeight: 'bold'
+      {/* Get Involved Section */}
+      <div style={{ padding: '20px 16px' }}>
+        <Title level={3} style={{ 
+          color: isDarkMode ? '#fff' : '#000',
+          marginBottom: '16px',
+          fontSize: '18px',
+          fontWeight: 700
         }}>
-          Quick Links
+          Get Involved
         </Title>
         
         <Row gutter={[12, 12]}>
-          <Col span={12}>
-            <Card 
-              style={{ 
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/giving')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#1a4d1a' : '#2d7a2d',
+                border: 'none',
                 borderRadius: '12px',
-                border: `1px solid ${colors.mint}`,
-                backgroundColor: colors.cardBackground,
-                cursor: 'pointer'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
               }}
-              bodyStyle={{ padding: '12px' }}
-              onClick={() => navigate('/members')}
             >
-              <div style={{ textAlign: 'center' }}>
-                <UserOutlined style={{ 
-                  fontSize: '24px', 
-                  color: colors.primary, 
-                  marginBottom: '8px' 
-                }} />
-                <Text style={{ 
-                  color: colors.textPrimary, 
-                  fontWeight: 'bold',
-                  display: 'block'
-                }}>
-                  My Profile
-                </Text>
-              </div>
-            </Card>
+              <GiftOutlined style={{ fontSize: '18px' }} />
+              Give
+            </Button>
           </Col>
-          <Col span={12}>
-            <Card 
-              style={{ 
+
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/request-forms')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#3a2a5a' : '#5a4a7a',
+                border: 'none',
                 borderRadius: '12px',
-                border: `1px solid ${colors.mint}`,
-                backgroundColor: colors.cardBackground,
-                cursor: 'pointer'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
               }}
-              bodyStyle={{ padding: '12px' }}
-              onClick={() => navigate('/blog')}
             >
-              <div style={{ textAlign: 'center' }}>
-                <BulbOutlined style={{ 
-                  fontSize: '24px', 
-                  color: colors.secondary, 
-                  marginBottom: '8px' 
-                }} />
-                <Text style={{ 
-                  color: colors.textPrimary, 
-                  fontWeight: 'bold',
-                  display: 'block'
-                }}>
-                  Blog Posts
-                </Text>
-              </div>
-            </Card>
+              <FormOutlined style={{ fontSize: '18px' }} />
+              Request
+            </Button>
+          </Col>
+
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/communities')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#1a3a5a' : '#2d5a7a',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
+              }}
+            >
+              <UsergroupAddOutlined style={{ fontSize: '18px' }} />
+              Connect
+            </Button>
+          </Col>
+
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/request-forms')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#4a3a1a' : '#7a5a2d',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
+              }}
+            >
+              <MessageOutlined style={{ fontSize: '18px' }} />
+              Prayer Request
+            </Button>
+          </Col>
+
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/events')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#4a1a3a' : '#7a2d5a',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
+              }}
+            >
+              <CalendarOutlined style={{ fontSize: '18px' }} />
+              Events
+            </Button>
+          </Col>
+
+          <Col xs={12}>
+            <Button
+              onClick={() => navigate('/request-forms')}
+              style={{
+                width: '100%',
+                height: '56px',
+                background: isDarkMode ? '#4a1a1a' : '#7a2d2d',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 500
+              }}
+            >
+              <TrophyOutlined style={{ fontSize: '18px' }} />
+              Praise Report
+            </Button>
           </Col>
         </Row>
       </div>
+
+      {/* Latest Sermon Section */}
+      <div style={{ padding: '20px 16px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <Title level={3} style={{ 
+            color: isDarkMode ? '#fff' : '#000',
+            marginBottom: 0,
+            fontSize: '18px',
+            fontWeight: 700
+          }}>
+            Latest Sermon
+          </Title>
+          <Button 
+            type="text"
+            onClick={() => navigate('/media')}
+            style={{ color: isDarkMode ? '#888' : '#666', fontSize: '13px', fontWeight: 400 }}
+          >
+            View all
+          </Button>
+        </div>
+
+        {loadingSermons ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="large" />
+          </div>
+        ) : latestSermons.length === 0 ? (
+          <Card style={{ 
+            background: isDarkMode ? '#1e1e1e' : '#fff',
+            textAlign: 'center',
+            padding: '20px'
+          }}>
+            <Text style={{ color: isDarkMode ? '#999' : '#666' }}>
+              No sermons available yet
+            </Text>
+          </Card>
+        ) : (
+          latestSermons.map((sermon) => (
+            <Card
+              key={sermon.id}
+              hoverable
+              onClick={() => navigate('/media')}
+              style={{
+                background: isDarkMode ? '#1e1e1e' : '#fff',
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+                borderRadius: '12px',
+                marginBottom: '12px'
+              }}
+              bodyStyle={{ padding: '12px' }}
+            >
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  background: sermon.thumbnail ? `url(${sermon.thumbnail})` : '#d2691e',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}>
+                  {!sermon.thumbnail && (
+                    <PlayCircleOutlined style={{ fontSize: '40px', color: '#fff', opacity: 0.7 }} />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ 
+                    color: isDarkMode ? '#888' : '#666',
+                    fontSize: '11px',
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontWeight: 400
+                  }}>
+                    {formatDate(sermon.date || sermon.createdAt)}
+                  </Text>
+                  <Title level={5} style={{ 
+                    color: isDarkMode ? '#fff' : '#000',
+                    marginBottom: '6px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    lineHeight: '1.3'
+                  }} ellipsis={{ rows: 2 }}>
+                    {sermon.title}
+                  </Title>
+                  {sermon.speaker && (
+                    <Text style={{ 
+                      color: isDarkMode ? '#888' : '#666',
+                      fontSize: '12px',
+                      fontWeight: 400
+                    }}>
+                      {sermon.speaker}
+                    </Text>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Blogs Section */}
+      <div style={{ padding: '20px 16px', paddingBottom: '80px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <Title level={3} style={{ 
+            color: isDarkMode ? '#fff' : '#000',
+            marginBottom: 0,
+            fontSize: '18px',
+            fontWeight: 700
+          }}>
+            Blogs
+          </Title>
+          <Button 
+            type="text"
+            onClick={() => navigate('/blog')}
+            style={{ color: isDarkMode ? '#888' : '#666', fontSize: '13px', fontWeight: 400 }}
+          >
+            View all
+          </Button>
+        </div>
+
+        {loadingBlogs ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="large" />
+          </div>
+        ) : latestBlogs.length === 0 ? (
+          <Card style={{ 
+            background: isDarkMode ? '#1e1e1e' : '#fff',
+            textAlign: 'center',
+            padding: '20px'
+          }}>
+            <Text style={{ color: isDarkMode ? '#999' : '#666' }}>
+              No blog posts available yet
+            </Text>
+          </Card>
+        ) : (
+          latestBlogs.map((blog) => (
+            <Card
+              key={blog.id}
+              hoverable
+              onClick={() => navigate('/blog')}
+              style={{
+                background: isDarkMode ? '#1e1e1e' : '#fff',
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+                borderRadius: '12px',
+                marginBottom: '12px'
+              }}
+              bodyStyle={{ padding: '12px' }}
+            >
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  background: blog.featuredImage ? `url(${blog.featuredImage})` : '#d2691e',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {!blog.featuredImage && (
+                    <FileTextOutlined style={{ fontSize: '40px', color: '#fff', opacity: 0.7 }} />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ 
+                    color: isDarkMode ? '#888' : '#666',
+                    fontSize: '11px',
+                    display: 'block',
+                    marginBottom: '6px',
+                    fontWeight: 400
+                  }}>
+                    {formatDate(blog.publishedAt || blog.createdAt)}
+                  </Text>
+                  <Title level={5} style={{ 
+                    color: isDarkMode ? '#fff' : '#000',
+                    marginBottom: '6px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    lineHeight: '1.3'
+                  }} ellipsis={{ rows: 2 }}>
+                    {blog.title}
+                  </Title>
+                  {blog.author && (
+                    <Text style={{ 
+                      color: isDarkMode ? '#888' : '#666',
+                      fontSize: '12px',
+                      fontWeight: 400
+                    }}>
+                      {blog.author}
+                    </Text>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
+    </>
   );
 };
 
