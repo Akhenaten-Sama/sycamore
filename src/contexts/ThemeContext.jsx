@@ -14,7 +14,14 @@ export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage for saved preference, default to light mode
     const saved = localStorage.getItem('sycamore-theme');
-    return saved ? JSON.parse(saved) : false;
+    const darkMode = saved ? JSON.parse(saved) : false;
+    
+    // Set initial background immediately
+    document.documentElement.style.background = darkMode ? '#121212' : '#ffffff';
+    document.body.style.background = darkMode ? '#121212' : '#ffffff';
+    document.body.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    
+    return darkMode;
   });
 
   useEffect(() => {
@@ -23,6 +30,10 @@ export const ThemeProvider = ({ children }) => {
     
     // Apply theme data attribute to body for CSS styling
     document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    
+    // Update html and body backgrounds
+    document.documentElement.style.background = isDarkMode ? '#121212' : '#ffffff';
+    document.body.style.background = isDarkMode ? '#121212' : '#ffffff';
   }, [isDarkMode]);
 
   const toggleTheme = () => {

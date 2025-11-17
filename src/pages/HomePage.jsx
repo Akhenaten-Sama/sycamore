@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Row, Col, Card, Button, Spin } from 'antd';
 import { 
-  CalendarOutlined, 
-  BookOutlined,
-  EditOutlined,
-  FormOutlined,
-  GiftOutlined,
-  HeartOutlined,
-  UsergroupAddOutlined,
-  MessageOutlined,
-  TrophyOutlined,
-  FileTextOutlined,
-  RightOutlined,
-  PlayCircleOutlined
+  PlayCircleOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles/colors';
 import ApiClient from '../services/apiClient';
+
+// Import homepage icons
+import GiveIcon from '../assets/icons/homepage/give.svg';
+import RequestsIcon from '../assets/icons/homepage/requests.svg';
+import ConnectIcon from '../assets/icons/homepage/connect.svg';
+import PrayerRequestIcon from '../assets/icons/homepage/prayer_request.svg';
+import EventsIcon from '../assets/icons/homepage/events.svg';
+import PraiseReportIcon from '../assets/icons/homepage/praise_report.svg';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -47,13 +45,32 @@ const HomePage = () => {
       const today = new Date();
       const isSunday = today.getDay() === 0;
       
-      if (isSunday) {
-        // Try to fetch live sermon
-        const response = await ApiClient.getMedia('?limit=50');
-        if (response?.data) {
-          // Find a sermon marked as live
-          const live = response.data.find(item => item.isLive && item.category === 'sermon');
-          setLiveSermon(live || null);
+      console.log('🔴 Loading live sermon...');
+      console.log('   Today is Sunday:', isSunday);
+      
+      // Always check for live sermons (remove Sunday restriction for testing)
+      const response = await ApiClient.getMedia('?limit=50');
+      console.log('   API response:', response);
+      
+      if (response?.data) {
+        console.log('   Total media items:', response.data.length);
+        
+        // Log items with isLive true
+        const liveItems = response.data.filter(item => item.isLive);
+        console.log('   Items with isLive=true:', liveItems.length);
+        liveItems.forEach(item => {
+          console.log(`      - ${item.title}: category="${item.category}", isLive=${item.isLive}`);
+        });
+        
+        // Find a sermon marked as live
+        const live = response.data.find(item => item.isLive && item.category === 'sermon');
+        console.log('   Live sermon found:', live ? live.title : 'none');
+        
+        // Show live sermon if found and it's Sunday, or if found regardless (for testing)
+        if (live) {
+          setLiveSermon(live);
+        } else {
+          setLiveSermon(null);
         }
       }
     } catch (error) {
@@ -68,10 +85,23 @@ const HomePage = () => {
       setLoadingSermons(true);
       const response = await ApiClient.getMedia('?limit=50');
       if (response?.data) {
+        console.log('🏠 HomePage received media items:', response.data.length);
+        
+        // Log first few items to see their structure
+        response.data.slice(0, 3).forEach(item => {
+          console.log(`   - ${item.title}: type="${item.type}", category="${item.category}"`);
+        });
+        
         // Filter for sermons only using category field
         const sermons = response.data
           .filter(item => item.category === 'sermon')
           .slice(0, 2);
+        
+        console.log('🏠 Filtered sermons:', sermons.length);
+        sermons.forEach(sermon => {
+          console.log(`   ✅ ${sermon.title}`);
+        });
+        
         setLatestSermons(sermons);
       }
     } catch (error) {
@@ -147,8 +177,8 @@ const HomePage = () => {
      
         borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
       }}>
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>👋</div>
-        <div style={{ fontSize: '25px', marginBottom: '12px' }}>Welcome to Sycamore Church</div>
+      
+        <div style={{ fontSize: '25px', marginBottom: '12px' }}>Welcome to Sycamore Church 👋</div>
         <Text style={{ 
           fontSize: '13px',
           color: isDarkMode ? '#888' : '#666',
@@ -438,141 +468,279 @@ const HomePage = () => {
         
         <Row gutter={[12, 12]}>
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/giving')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#1a4d1a' : '#2d7a2d',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#2d7a2d',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={GiveIcon} 
+                  alt="Give"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <GiftOutlined style={{ fontSize: '18px' }} />
-              Give
-            </Button>
+              }}>
+                Give
+              </Text>
+            </div>
           </Col>
 
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/request-forms')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#3a2a5a' : '#5a4a7a',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#5a4a7a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={RequestsIcon} 
+                  alt="Request"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <FormOutlined style={{ fontSize: '18px' }} />
-              Request
-            </Button>
+              }}>
+                Request
+              </Text>
+            </div>
           </Col>
 
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/communities')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#1a3a5a' : '#2d5a7a',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#2d7a9a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={ConnectIcon} 
+                  alt="Connect"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <UsergroupAddOutlined style={{ fontSize: '18px' }} />
-              Connect
-            </Button>
+              }}>
+                Connect
+              </Text>
+            </div>
           </Col>
 
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/request-forms')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#4a3a1a' : '#7a5a2d',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#d97a2d',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={PrayerRequestIcon} 
+                  alt="Prayer Request"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <MessageOutlined style={{ fontSize: '18px' }} />
-              Prayer Request
-            </Button>
+              }}>
+                Prayer Request
+              </Text>
+            </div>
           </Col>
 
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/events')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#4a1a3a' : '#7a2d5a',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#d92d7a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={EventsIcon} 
+                  alt="Events"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <CalendarOutlined style={{ fontSize: '18px' }} />
-              Events
-            </Button>
+              }}>
+                Events
+              </Text>
+            </div>
           </Col>
 
           <Col xs={12}>
-            <Button
+            <div
               onClick={() => navigate('/request-forms')}
               style={{
                 width: '100%',
-                height: '56px',
-                background: isDarkMode ? '#4a1a1a' : '#7a2d2d',
-                border: 'none',
+                height: '64px',
+                background: isDarkMode ? '#1e1e1e' : '#ffffff',
+                border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 16px',
+                gap: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
                 borderRadius: '12px',
+                background: '#d92d2d',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                color: '#fff',
-                fontSize: '13px',
+                flexShrink: 0
+              }}>
+                <img 
+                  src={PraiseReportIcon} 
+                  alt="Praise Report"
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)'
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000',
+                fontSize: '15px',
                 fontWeight: 500
-              }}
-            >
-              <TrophyOutlined style={{ fontSize: '18px' }} />
-              Praise Report
-            </Button>
+              }}>
+                Praise Report
+              </Text>
+            </div>
           </Col>
         </Row>
       </div>
@@ -630,11 +798,38 @@ const HomePage = () => {
               }}
               bodyStyle={{ padding: '12px' }}
             >
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <Text style={{ 
+                    color: isDarkMode ? '#888' : '#666',
+                    fontSize: '11px',
+                    fontWeight: 400
+                  }}>
+                    {formatDate(sermon.date || sermon.createdAt)}
+                  </Text>
+                  <Title level={5} style={{ 
+                    color: isDarkMode ? '#fff' : '#000',
+                    marginBottom: 0,
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    lineHeight: '1.4'
+                  }} ellipsis={{ rows: 2 }}>
+                    {sermon.title}
+                  </Title>
+                  {sermon.speaker && (
+                    <Text style={{ 
+                      color: isDarkMode ? '#888' : '#666',
+                      fontSize: '13px',
+                      fontWeight: 400
+                    }}>
+                      {sermon.speaker}
+                    </Text>
+                  )}
+                </div>
                 <div style={{
                   width: '100px',
                   height: '100px',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                   overflow: 'hidden',
                   background: sermon.thumbnail ? `url(${sermon.thumbnail})` : '#d2691e',
                   backgroundSize: 'cover',
@@ -647,35 +842,6 @@ const HomePage = () => {
                 }}>
                   {!sermon.thumbnail && (
                     <PlayCircleOutlined style={{ fontSize: '40px', color: '#fff', opacity: 0.7 }} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ 
-                    color: isDarkMode ? '#888' : '#666',
-                    fontSize: '11px',
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 400
-                  }}>
-                    {formatDate(sermon.date || sermon.createdAt)}
-                  </Text>
-                  <Title level={5} style={{ 
-                    color: isDarkMode ? '#fff' : '#000',
-                    marginBottom: '6px',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    lineHeight: '1.3'
-                  }} ellipsis={{ rows: 2 }}>
-                    {sermon.title}
-                  </Title>
-                  {sermon.speaker && (
-                    <Text style={{ 
-                      color: isDarkMode ? '#888' : '#666',
-                      fontSize: '12px',
-                      fontWeight: 400
-                    }}>
-                      {sermon.speaker}
-                    </Text>
                   )}
                 </div>
               </div>

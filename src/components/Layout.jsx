@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Layout as AntLayout, Button, Avatar, Dropdown, Space, Badge } from 'antd';
 import { 
-  HomeOutlined, 
   CalendarOutlined, 
-  TeamOutlined, 
   VideoCameraOutlined, 
   BookOutlined, 
   HeartOutlined, 
@@ -11,22 +9,25 @@ import {
   FileTextOutlined,
   LoginOutlined,
   LogoutOutlined,
-  MoreOutlined,
   PlayCircleOutlined,
   CompassOutlined,
   BulbOutlined,
-  GiftOutlined,
   FormOutlined,
   SunOutlined,
   MoonOutlined,
-  FolderOutlined,
-  EllipsisOutlined
+  HomeOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import AuthModal from './AuthModal';
 import { getColors } from '../styles/colors';
+
+// Import menu icons
+import GiveIcon from '../assets/icons/homepage/give.svg';
+import ConnectIcon from '../assets/icons/homepage/connect.svg';
+import ResourcesIcon from '../assets/icons/homepage/resources.svg';
+import MoreIcon from '../assets/icons/homepage/more.svg';
 
 const { Header, Content } = AntLayout;
 
@@ -76,43 +77,30 @@ const Layout = ({ children }) => {
     },
     {
       key: '/communities',
-      icon: <TeamOutlined />,
+      icon: <img src={ConnectIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
       label: 'Connect',
     },
     {
       key: '/giving',
-      icon: <GiftOutlined />,
+      icon: <img src={GiveIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
       label: 'Give',
     },
     {
       key: '/resources',
-      icon: <FolderOutlined />,
+      icon: <img src={ResourcesIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
       label: 'Resources',
     },
     {
       key: '/more',
-      icon: <EllipsisOutlined />,
+      icon: <img src={MoreIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
       label: 'More',
     },
   ];
 
   const handleBottomNavClick = (path) => {
     if (path === '/more') {
-      // Show more options
-      const moreItems = [
-        { path: '/events', label: 'Events', icon: <CalendarOutlined /> },
-        { path: '/watch-live', label: 'Watch Live', icon: <PlayCircleOutlined /> },
-        { path: '/media', label: 'Media', icon: <VideoCameraOutlined /> },
-        { path: '/blog', label: 'Blog', icon: <FileTextOutlined /> },
-        { path: '/devotionals', label: 'Devotionals', icon: <CompassOutlined /> },
-        { path: '/requests', label: 'Request Forms', icon: <FormOutlined /> },
-        { path: '/sermon-notes', label: 'Sermon Notes', icon: <BookOutlined /> },
-        { path: '/bible', label: 'Bible', icon: <BookOutlined /> },
-        { path: '/profile', label: 'Profile', icon: <UserOutlined /> },
-      ];
-      
-      // For now, navigate to events as default
-      navigate('/events');
+      // Navigate to More page
+      navigate('/more');
     } else if (path === '/resources') {
       // Navigate to media or create resources page
       navigate('/media');
@@ -122,8 +110,10 @@ const Layout = ({ children }) => {
   };
 
   const BottomNavItem = ({ item }) => {
-    const isActive = location.pathname === item.key || 
-                    (item.key === '/more' && !['/', '/communities', '/giving', '/resources'].includes(location.pathname));
+    // Special handling for home route
+    const isActive = item.key === '/' 
+      ? location.pathname === '/'
+      : location.pathname === item.key || location.pathname.startsWith(item.key + '/');
     
     return (
       <div

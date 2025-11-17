@@ -20,10 +20,17 @@ import SermonNotesPage from './pages/SermonNotesPage';
 import BiblePage from './pages/BiblePage';
 import RequestFormsPage from './pages/RequestFormsPage';
 import WatchLivePage from './pages/WatchLivePage';
+import MorePage from './pages/MorePage';
 import { getAntdTheme } from './styles/colors';
 
 const AppContent = () => {
   const { isDarkMode } = useTheme();
+  
+  // Update document background
+  React.useEffect(() => {
+    document.documentElement.style.background = isDarkMode ? '#121212' : '#ffffff';
+    document.body.style.background = isDarkMode ? '#121212' : '#ffffff';
+  }, [isDarkMode]);
   
   return (
     <ErrorBoundary>
@@ -47,6 +54,7 @@ const AppContent = () => {
                   <Route path="/bible" element={<BiblePage />} />
                   <Route path="/requests" element={<RequestFormsPage />} />
                   <Route path="/watch-live" element={<WatchLivePage />} />
+                  <Route path="/more" element={<MorePage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>
@@ -67,7 +75,8 @@ const App = () => {
       margin: 0, 
       padding: 0,
       overflow: 'hidden',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      background: 'inherit'
     }}>
       <ErrorBoundary>
         <ThemeProvider>

@@ -8,6 +8,20 @@
   overflow-x: hidden;
 }
 
+body {
+  margin: 0;
+  padding: 0;
+  background: inherit;
+  overflow-x: hidden;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  background: inherit;
+  overflow-x: hidden;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

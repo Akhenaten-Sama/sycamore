@@ -1,255 +1,327 @@
 import React, { useState } from 'react';
-import { Typography, Card, Form, Input, Button, Avatar, Space, Divider, Row, Col, message } from 'antd';
-import { UserOutlined, EditOutlined, SaveOutlined, CalendarOutlined, StarOutlined, IdcardOutlined } from '@ant-design/icons';
+import { Avatar, Modal, Button } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import colors from '../styles/colors';
-
-const { Title, Text } = Typography;
-const { TextArea } = Input;
+import { useTheme } from '../contexts/ThemeContext';
+import { getColors } from '../styles/colors';
 
 const ProfilePage = () => {
-  const { user, updateProfile } = useAuth();
-  const [editing, setEditing] = useState(false);
-  const [form] = Form.useForm();
+  const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [editKinVisible, setEditKinVisible] = useState(false);
 
-  const handleEdit = () => {
-    setEditing(true);
-    form.setFieldsValue({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      bio: user.bio
-    });
-  };
-
-  const handleSave = async (values) => {
-    try {
-      await updateProfile(values);
-      setEditing(false);
-      message.success('Profile updated successfully!');
-    } catch (error) {
-      message.error('Failed to update profile');
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[1][0];
     }
-  };
-
-  const handleCancel = () => {
-    setEditing(false);
-    form.resetFields();
+    return name.substring(0, 2);
   };
 
   if (!user) {
     return (
-      <Card style={{ textAlign: 'center', padding: '50px 0' }}>
-        <Title level={3}>Please sign in to view your profile</Title>
-      </Card>
+      <div style={{
+        minHeight: '100vh',
+        background: colors.background,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div style={{ textAlign: 'center', color: colors.text }}>
+          <h2>Please sign in to view your profile</h2>
+        </div>
+      </div>
     );
   }
 
+  const ProfileField = ({ label, value }) => (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px 0',
+      borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+    }}>
+      <span style={{ 
+        fontSize: '14px',
+        color: isDarkMode ? '#888' : '#666'
+      }}>
+        {label}
+      </span>
+      <span style={{ 
+        fontSize: '14px',
+        color: colors.text,
+        fontWeight: 500,
+        textAlign: 'right',
+        maxWidth: '60%'
+      }}>
+        {value || 'NIL'}
+      </span>
+    </div>
+  );
+
+  const SectionCard = ({ title, buttonText, onEdit, children }) => (
+    <div style={{
+      margin: '0 20px 20px',
+      padding: '20px',
+      background: isDarkMode ? '#1a1a1a' : '#ffffff',
+      borderRadius: '12px',
+      border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px'
+      }}>
+        <h3 style={{ 
+          fontSize: '18px',
+          fontWeight: 'bold',
+          color: colors.text,
+          margin: 0
+        }}>
+          {title}
+        </h3>
+        <Button
+          onClick={onEdit}
+          style={{
+            background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
+            border: 'none',
+            color: colors.text,
+            borderRadius: '8px',
+            padding: '4px 16px',
+            fontSize: '14px',
+            height: 'auto'
+          }}
+        >
+          {buttonText}
+        </Button>
+      </div>
+      {children}
+    </div>
+  );
+
   return (
-    <div style={{ background: colors.background, minHeight: '100vh', padding: '16px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ color: colors.textPrimary }}>
-          <IdcardOutlined style={{ marginRight: '8px', color: colors.primary }} />
+    <div style={{
+      minHeight: '100vh',
+      background: colors.background,
+      paddingTop: '16px',
+      paddingBottom: '80px'
+    }}>
+      {/* Page Title */}
+      <div style={{ 
+        padding: '0 20px',
+        marginBottom: '24px'
+      }}>
+        <h1 style={{ 
+          fontSize: '32px',
+          fontWeight: 'bold',
+          color: colors.text,
+          marginBottom: '8px'
+        }}>
           My Profile
-        </Title>
+        </h1>
+        <p style={{ 
+          fontSize: '14px',
+          color: isDarkMode ? '#999' : '#666',
+          margin: 0
+        }}>
+          Join communities to connect with fellow believers
+        </p>
       </div>
 
-      <Row gutter={16}>
-        <Col xs={24} md={8}>
-          <Card 
-            style={{ 
-              textAlign: 'center',
-              backgroundColor: colors.cardBackground,
-              border: `1px solid ${colors.mint}`,
-              borderRadius: '12px'
-            }}
-          >
-            <Avatar 
-              size={120} 
-              src={user.profilePicture} 
-              icon={<UserOutlined />}
-              style={{ 
-                marginBottom: 16,
-                border: `3px solid ${colors.primary}`,
-                backgroundColor: colors.primary
-              }}
-            />
-            <Title level={4} style={{ color: colors.textPrimary }}>
-              {user.firstName} {user.lastName}
-            </Title>
-            <Text type="secondary" style={{ color: colors.textSecondary }}>
-              {user.email}
-            </Text>
-            <Divider style={{ borderColor: colors.mint }} />
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Text style={{ color: colors.textPrimary }}>
-                <strong style={{ color: colors.primary }}>
-                  <CalendarOutlined style={{ marginRight: '4px' }} />
-                  Member Since:
-                </strong> {new Date(user.createdAt || '2025-01-01').toLocaleDateString()}
-              </Text>
-              <Text style={{ color: colors.textPrimary }}>
-                <strong style={{ color: colors.success }}>
-                  <StarOutlined style={{ marginRight: '4px' }} />
-                  Status:
-                </strong> Active Member
-              </Text>
-              <Text style={{ color: colors.textPrimary }}>
-                <strong style={{ color: colors.warning }}>
-                  <UserOutlined style={{ marginRight: '4px' }} />
-                  Role:
-                </strong> {user.role || 'Member'}
-              </Text>
-            </Space>
-          </Card>
-        </Col>
+      {/* User Profile Header */}
+      <div style={{
+        margin: '0 20px 24px',
+        padding: '16px',
+        background: isDarkMode ? '#1a1a1a' : '#ffffff',
+        borderRadius: '12px',
+        border: isDarkMode ? 'none' : '1px solid #e0e0e0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        position: 'relative'
+      }}>
+        <Avatar 
+          size={64}
+          style={{ 
+            backgroundColor: '#5a4a7a',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            flexShrink: 0
+          }}
+        >
+          {getInitials(user.name || user.firstName + ' ' + user.lastName)}
+        </Avatar>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ 
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: colors.text,
+            marginBottom: '4px'
+          }}>
+            {user.name || `${user.firstName} ${user.lastName}`}
+          </div>
+          <div style={{ 
+            fontSize: '14px',
+            color: isDarkMode ? '#888' : '#666'
+          }}>
+            {user.email}
+          </div>
+        </div>
+        <div style={{
+          position: 'absolute',
+          bottom: '12px',
+          right: '12px',
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          background: '#5a4a7a',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer'
+        }}>
+          <EditOutlined style={{ color: '#ffffff', fontSize: '14px' }} />
+        </div>
+      </div>
 
-        <Col xs={24} md={16}>
-          <Card 
-            title={
-              <span style={{ color: colors.textPrimary }}>
-                Personal Information
-              </span>
-            }
-            style={{
-              backgroundColor: colors.cardBackground,
-              border: `1px solid ${colors.mint}`,
-              borderRadius: '12px'
-            }}
-            headStyle={{
-              backgroundColor: colors.surfaceBackground,
-              borderBottom: `1px solid ${colors.mint}`
-            }}
-            extra={
-              !editing ? (
-                <Button 
-                  icon={<EditOutlined />} 
-                  onClick={handleEdit}
-                  style={{
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                    color: colors.textWhite
-                  }}
-                >
-                  Edit Profile
-                </Button>
-              ) : null
-            }
-          >
-            {!editing ? (
-              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>First Name:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.firstName}</Text>
-                </div>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>Last Name:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.lastName}</Text>
-                </div>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>Email:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.email}</Text>
-                </div>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>Phone:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.phone || 'Not provided'}</Text>
-                </div>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>Address:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.address || 'Not provided'}</Text>
-                </div>
-                <div>
-                  <Text strong style={{ color: colors.primary }}>Bio:</Text>
-                  <br />
-                  <Text style={{ color: colors.textPrimary }}>{user.bio || 'No bio provided'}</Text>
-                </div>
-              </Space>
-            ) : (
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSave}
-              >
-                <Row gutter={16}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="firstName"
-                      label="First Name"
-                      rules={[{ required: true, message: 'Please enter your first name' }]}
-                    >
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="lastName"
-                      label="Last Name"
-                      rules={[{ required: true, message: 'Please enter your last name' }]}
-                    >
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                </Row>
+      {/* Profile Details Section */}
+      <SectionCard 
+        title="Profile Details" 
+        buttonText="Edit profile"
+        onEdit={() => setEditProfileVisible(true)}
+      >
+        <ProfileField label="First Name" value={user.firstName || user.name?.split(' ')[0]} />
+        <ProfileField label="Last Name" value={user.lastName || user.name?.split(' ')[1]} />
+        <ProfileField label="Email" value={user.email} />
+        <ProfileField label="Phone Number" value={user.phone} />
+        <ProfileField label="Address" value={user.address} />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '16px'
+        }}>
+          <span style={{ 
+            fontSize: '14px',
+            color: isDarkMode ? '#888' : '#666'
+          }}>
+            Date of Birth
+          </span>
+          <span style={{ 
+            fontSize: '14px',
+            color: colors.text,
+            fontWeight: 500
+          }}>
+            {user.dateOfBirth || 'Not provided'}
+          </span>
+        </div>
+      </SectionCard>
 
-                <Form.Item
-                  name="email"
-                  label="Email"
-                  rules={[
-                    { required: true, message: 'Please enter your email' },
-                    { type: 'email', message: 'Please enter a valid email' }
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
+      {/* Kin Details Section */}
+      <SectionCard 
+        title="Kin Details" 
+        buttonText="Edit details"
+        onEdit={() => setEditKinVisible(true)}
+      >
+        <ProfileField label="Full Name" value={user.kinName} />
+        <ProfileField label="Phone Number" value={user.kinPhone} />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '16px'
+        }}>
+          <span style={{ 
+            fontSize: '14px',
+            color: isDarkMode ? '#888' : '#666'
+          }}>
+            Relationship
+          </span>
+          <span style={{ 
+            fontSize: '14px',
+            color: colors.text,
+            fontWeight: 500
+          }}>
+            {user.kinRelationship || 'Not provided'}
+          </span>
+        </div>
+      </SectionCard>
 
-                <Form.Item name="phone" label="Phone">
-                  <Input />
-                </Form.Item>
+      {/* Other Details Section */}
+      <div style={{
+        margin: '0 20px 20px',
+        padding: '20px',
+        background: isDarkMode ? '#1a1a1a' : '#ffffff',
+        borderRadius: '12px',
+        border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+      }}>
+        <h3 style={{ 
+          fontSize: '18px',
+          fontWeight: 'bold',
+          color: colors.text,
+          marginBottom: '16px'
+        }}>
+          Other Details
+        </h3>
+        <ProfileField 
+          label="Member Since" 
+          value={user.memberSince ? new Date(user.memberSince).toLocaleDateString() : user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Not available'} 
+        />
+        <ProfileField 
+          label="Status" 
+          value={
+            <span style={{ color: '#4caf50', fontWeight: 600 }}>
+              {user.status || 'Active'}
+            </span>
+          } 
+        />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '16px'
+        }}>
+          <span style={{ 
+            fontSize: '14px',
+            color: isDarkMode ? '#888' : '#666'
+          }}>
+            Role
+          </span>
+          <span style={{ 
+            fontSize: '14px',
+            color: colors.text,
+            fontWeight: 500
+          }}>
+            {user.role || 'Member'}
+          </span>
+        </div>
+      </div>
 
-                <Form.Item name="address" label="Address">
-                  <Input />
-                </Form.Item>
+      {/* Edit Profile Modal - TODO: Implement */}
+      <Modal
+        title="Edit Profile"
+        open={editProfileVisible}
+        onCancel={() => setEditProfileVisible(false)}
+        footer={null}
+      >
+        <p>Edit profile form coming soon...</p>
+      </Modal>
 
-                <Form.Item name="bio" label="Bio">
-                  <TextArea rows={4} placeholder="Tell us about yourself..." />
-                </Form.Item>
-
-                <Form.Item>
-                  <Space>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
-                      icon={<SaveOutlined />}
-                      style={{
-                        backgroundColor: colors.success,
-                        borderColor: colors.success
-                      }}
-                    >
-                      Save Changes
-                    </Button>
-                    <Button 
-                      onClick={handleCancel}
-                      style={{
-                        borderColor: colors.textSecondary,
-                        color: colors.textSecondary
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
-            )}
-          </Card>
-        </Col>
-      </Row>
+      {/* Edit Kin Modal - TODO: Implement */}
+      <Modal
+        title="Edit Kin Details"
+        open={editKinVisible}
+        onCancel={() => setEditKinVisible(false)}
+        footer={null}
+      >
+        <p>Edit kin details form coming soon...</p>
+      </Modal>
     </div>
   );
 };

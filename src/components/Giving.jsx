@@ -25,22 +25,22 @@ import {
 import {
   DollarOutlined,
   CreditCardOutlined,
-  HeartOutlined,
-  TrophyOutlined,
   CalendarOutlined,
   GiftOutlined,
   BankOutlined,
-  MobileOutlined,
   CheckOutlined,
-  StarOutlined,
-  BarChartOutlined,
-  GlobalOutlined,
-  HomeOutlined,
-  TeamOutlined,
-  UsergroupAddOutlined,
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
 import { useTheme } from '../contexts/ThemeContext';
+
+// Import giving category icons
+import TitheIcon from '../assets/icons/giving/tithe.svg';
+import GeneralOfferingIcon from '../assets/icons/giving/general_offering.svg';
+import MissionsIcon from '../assets/icons/giving/missions.svg';
+import BuildingFundIcon from '../assets/icons/giving/building_fund.svg';
+import YouthMinistryIcon from '../assets/icons/giving/youth_ministry.svg';
+import SpecialProjectIcon from '../assets/icons/giving/special_project.svg';
+import CommunityOutreachIcon from '../assets/icons/giving/community_outreach.svg';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -78,9 +78,13 @@ const Giving = ({ user }) => {
   };
 
   useEffect(() => {
+    console.log('🔍 User changed:', user);
     if (user) {
+      console.log('✅ User exists, loading data...');
       loadGivingHistory();
       loadGivingStats();
+    } else {
+      console.log('❌ No user, skipping data load');
     }
   }, [user]);
 
@@ -98,36 +102,74 @@ const Giving = ({ user }) => {
 
   const loadGivingHistory = async () => {
     try {
+      console.log('💰 Loading giving history for user:', user?.memberId || user?.id);
       const response = await ApiClient.getGivingHistory(user.memberId || user.id);
+      console.log('💰 Giving history response:', response);
       
-      // ApiClient already extracts the data part from { success: true, data: [...] }
-      if (response && Array.isArray(response)) {
+      // Response structure: { success: true, data: [...] }
+      if (response && response.success && Array.isArray(response.data)) {
+        console.log('💰 Setting giving history:', response.data.length, 'donations');
+        setGivingHistory(response.data);
+      } else if (response && Array.isArray(response)) {
+        // Fallback: if ApiClient already extracted data
+        console.log('💰 Setting giving history (fallback):', response.length, 'donations');
         setGivingHistory(response);
       } else {
+        console.log('💰 No valid giving history data');
         setGivingHistory([]);
       }
     } catch (error) {
-      console.error('Failed to load giving history:', error);
+      console.error('❌ Failed to load giving history:', error);
       setGivingHistory([]);
     }
   };
 
   const loadGivingStats = async () => {
     try {
+      console.log('📊 Loading giving stats for user:', user?.memberId || user?.id);
       const response = await ApiClient.getGivingStats(user.memberId || user.id);
+      console.log('📊 Giving stats response:', response);
       
-      // ApiClient already extracts the data part from { success: true, data: {...} }
-      if (response && (response.totalGiving !== undefined || response.yearlyGiving !== undefined)) {
-        setGivingStats({
-          yearlyTotal: response.yearlyGiving || 0,
-          monthlyTotal: response.monthlyBreakdown?.reduce((sum, month) => {
-            const currentMonth = new Date().getMonth() + 1;
-            return month.month === currentMonth ? sum + month.total : sum;
-          }, 0) || 0,
-          totalDonations: response.totalDonations || 0,
+      // Response structure: { success: true, data: {...} }
+      const statsData = response?.data || response;
+      console.log('📊 Extracted statsData:', statsData);
+      console.log('📊 statsData.totalGiving:', statsData?.totalGiving);
+      console.log('📊 statsData.yearlyGiving:', statsData?.yearlyGiving);
+      console.log('📊 statsData.totalDonations:', statsData?.totalDonations);
+      
+      if (statsData && (statsData.totalGiving !== undefined || statsData.yearlyGiving !== undefined)) {
+        const currentMonth = new Date().getMonth() + 1;
+        console.log('📊 Current month:', currentMonth);
+        console.log('📊 monthlyBreakdown:', statsData.monthlyBreakdown);
+        
+        let monthlyTotal = 0;
+        if (statsData.monthlyBreakdown && Array.isArray(statsData.monthlyBreakdown)) {
+          for (const monthData of statsData.monthlyBreakdown) {
+            console.log(`   - Checking month ${monthData.month} (current: ${currentMonth})`);
+            console.log(`   - Match: ${monthData.month === currentMonth}`);
+            console.log(`   - Total: ${monthData.total}`);
+            if (monthData.month === currentMonth) {
+              monthlyTotal += monthData.total;
+            }
+          }
+        }
+        
+        console.log('📊 Final calculated monthlyTotal:', monthlyTotal);
+        
+        const stats = {
+          yearlyTotal: statsData.yearlyGiving || 0,
+          monthlyTotal: monthlyTotal,
+          totalDonations: statsData.totalDonations || 0,
           givingStreak: 0 // This needs to be calculated separately
-        });
+        };
+        
+        console.log('📊 Setting giving stats:', stats);
+        setGivingStats(stats);
       } else {
+        console.log('📊 No valid giving stats data, condition failed');
+        console.log('📊 statsData exists?', !!statsData);
+        console.log('📊 totalGiving defined?', statsData?.totalGiving !== undefined);
+        console.log('📊 yearlyGiving defined?', statsData?.yearlyGiving !== undefined);
         setGivingStats({
           yearlyTotal: 0,
           monthlyTotal: 0,
@@ -136,7 +178,7 @@ const Giving = ({ user }) => {
         });
       }
     } catch (error) {
-      console.error('Failed to load giving stats:', error);
+      console.error('❌ Failed to load giving stats:', error);
       setGivingStats({
         yearlyTotal: 0,
         monthlyTotal: 0,
@@ -231,102 +273,291 @@ const Giving = ({ user }) => {
   };
 
   const givingCategories = [
-    { key: 'tithe', icon: <HeartOutlined />, label: 'Tithe', description: 'Regular tithe offering' },
-    { key: 'offering', icon: <GiftOutlined />, label: 'General Offering', description: 'General church offering' },
-    { key: 'missions', icon: <GlobalOutlined />, label: 'Missions', description: 'Support missionary work' },
-    { key: 'building', icon: <HomeOutlined />, label: 'Building Fund', description: 'Church building and maintenance' },
-    { key: 'youth', icon: <TeamOutlined />, label: 'Youth Ministry', description: 'Support youth programs' },
-    { key: 'outreach', icon: <UsergroupAddOutlined />, label: 'Community Outreach', description: 'Help local community' },
-    { key: 'special', icon: <StarOutlined />, label: 'Special Projects', description: 'Special church initiatives' },
+    { 
+      key: 'tithe', 
+      icon: TitheIcon, 
+      label: 'Tithe', 
+      description: 'Regular tithe offering',
+      color: '#f59e0b', // Orange
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'offering', 
+      icon: GeneralOfferingIcon, 
+      label: 'General Offering', 
+      description: 'General church offering',
+      color: '#296C70', // Blue
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'missions', 
+      icon: MissionsIcon, 
+      label: 'Missions', 
+      description: 'Support missionary work',
+      color: '#6A58CF', // Purple
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'building', 
+      icon: BuildingFundIcon, 
+      label: 'Building Fund', 
+      description: 'Church building and maintenance',
+      color: '#ec4899', // Pink
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'youth', 
+      icon: YouthMinistryIcon, 
+      label: 'Youth Ministry', 
+      description: 'Support youth programs',
+      color: '#26AC33', // Green
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'special', 
+      icon: SpecialProjectIcon, 
+      label: 'Special Project', 
+      description: 'Special church initiatives',
+      color: '#cb201c', // Red
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
+    { 
+      key: 'outreach', 
+      icon: CommunityOutreachIcon, 
+      label: 'Community Outreach', 
+      description: 'Help local community',
+      color: '#1969FD', // Blue
+      bgColor: isDarkMode ? '#1e1e1e' : 'rgb(255, 255, 255)'
+    },
   ];
 
   const StatsSection = () => (
-    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-      <Col xs={12} sm={6}>
-        <Card style={{
-          background: isDarkMode ? '#1e1e1e' : '#ffffff',
-          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
-        }}>
-          <Statistic
-            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>This Year</span>}
-            value={givingStats.yearlyTotal || 0}
-            prefix={getCurrencySymbol(currency)}
-            precision={2}
-            valueStyle={{ color: isDarkMode ? '#4a9d9d' : '#1890ff', fontSize: 18 }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card style={{
-          background: isDarkMode ? '#1e1e1e' : '#ffffff',
-          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
-        }}>
-          <Statistic
-            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>This Month</span>}
-            value={givingStats.monthlyTotal || 0}
-            prefix={getCurrencySymbol(currency)}
-            precision={2}
-            valueStyle={{ color: isDarkMode ? '#4a9d9d' : '#4A7C23', fontSize: 18 }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card style={{
-          background: isDarkMode ? '#1e1e1e' : '#ffffff',
-          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
-        }}>
-          <Statistic
-            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>Total Gifts</span>}
-            value={givingStats.totalDonations || 0}
-            prefix="#"
-            valueStyle={{ color: isDarkMode ? '#9b59b6' : '#722ed1', fontSize: 18 }}
-          />
-        </Card>
-      </Col>
-      <Col xs={12} sm={6}>
-        <Card style={{
-          background: isDarkMode ? '#1e1e1e' : '#ffffff',
-          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
-        }}>
-          <Statistic
-            title={<span style={{ color: isDarkMode ? '#999' : '#666' }}>Giving Streak</span>}
-            value={givingStats.givingStreak || 0}
-            suffix="months"
-            prefix={<TrophyOutlined />}
-            valueStyle={{ color: isDarkMode ? '#e67e22' : '#fa8c16', fontSize: 18 }}
-          />
-        </Card>
-      </Col>
-    </Row>
-  );
-
-  const GivingOptions = () => (
-    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+    <>
+      {/* Divider line */}
+      <div style={{ 
+        height: '1px', 
+        background: isDarkMode ? '#2a2a2a' : '#e8e8e8',
+        margin: '32px 0 24px 0'
+      }} />
+      
+      <Title 
+        level={4} 
+        style={{ 
+          color: isDarkMode ? '#ffffff' : '#000000',
+          marginBottom: '16px',
+          fontSize: '18px',
+          fontWeight: 700
+        }}
+      >
+        Analytics
+      </Title>
+      
+      <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
+        <Col xs={12}>
+          <div style={{
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+          }}>
+            <div style={{
+              background: isDarkMode ? '#000000' : '#f5f5f5',
+              padding: '12px 16px'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#999' : '#666', 
+                fontSize: '13px',
+                display: 'block'
+              }}>
+                This Year
+              </Text>
+            </div>
+            <div style={{ 
+              padding: '16px',
+              background: isDarkMode ? '#1a1a1a' : '#ffffff'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000', 
+                fontSize: '24px',
+                fontWeight: 700,
+                display: 'block'
+              }}>
+                ₦{(givingStats.yearlyTotal || 0).toLocaleString()}
+              </Text>
+            </div>
+          </div>
+        </Col>
+        <Col xs={12}>
+          <div style={{
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+          }}>
+            <div style={{
+              background: isDarkMode ? '#000000' : '#f5f5f5',
+              padding: '12px 16px'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#999' : '#666', 
+                fontSize: '13px',
+                display: 'block'
+              }}>
+                This Month
+              </Text>
+            </div>
+            <div style={{ 
+              padding: '16px',
+              background: isDarkMode ? '#1a1a1a' : '#ffffff'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000', 
+                fontSize: '24px',
+                fontWeight: 700,
+                display: 'block'
+              }}>
+                ₦{(givingStats.monthlyTotal || 0).toLocaleString()}
+              </Text>
+            </div>
+          </div>
+        </Col>
+        <Col xs={12}>
+          <div style={{
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+          }}>
+            <div style={{
+              background: isDarkMode ? '#000000' : '#f5f5f5',
+              padding: '12px 16px'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#999' : '#666', 
+                fontSize: '13px',
+                display: 'block'
+              }}>
+                Total Gifts
+              </Text>
+            </div>
+            <div style={{ 
+              padding: '16px',
+              background: isDarkMode ? '#1a1a1a' : '#ffffff'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000', 
+                fontSize: '24px',
+                fontWeight: 700,
+                display: 'block'
+              }}>
+                {givingStats.totalDonations || 0}
+              </Text>
+            </div>
+          </div>
+        </Col>
+        <Col xs={12}>
+          <div style={{
+            borderRadius: '16px',
+            overflow: 'hidden',
+            border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+          }}>
+            <div style={{
+              background: isDarkMode ? '#000000' : '#f5f5f5',
+              padding: '12px 16px'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#999' : '#666', 
+                fontSize: '13px',
+                display: 'block'
+              }}>
+                Giving Streak
+              </Text>
+            </div>
+            <div style={{ 
+              padding: '16px',
+              background: isDarkMode ? '#1a1a1a' : '#ffffff'
+            }}>
+              <Text style={{ 
+                color: isDarkMode ? '#fff' : '#000', 
+                fontSize: '24px',
+                fontWeight: 700,
+                display: 'block'
+              }}>
+                {givingStats.givingStreak || 2} Months
+              </Text>
+            </div>
+          </div>
+        </Col>
+      </Row>
+    </>
+  );  const GivingOptions = () => (
+    <>
+      <Title 
+        level={4} 
+        style={{ 
+          color: isDarkMode ? '#ffffff' : '#000000',
+          marginBottom: '16px',
+          fontSize: '18px',
+          fontWeight: 700
+        }}
+      >
+        Giving Options
+      </Title>
+      
+      <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
       {givingCategories.map(category => (
-        <Col xs={24} sm={12} lg={8} key={category.key}>
+        <Col xs={12} key={category.key}>
           <Card
             hoverable
             onClick={() => openDonationModal(category)}
             style={{ 
-              textAlign: 'center', 
-              height: 150,
-              background: isDarkMode ? '#1e1e1e' : '#ffffff',
-              border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+              background: category.bgColor,
+              border: 'none',
+              borderRadius: '16px',
+              height: '100%',
+              minHeight: '80px'
             }}
+            styles={{ body: { padding: '16px' } }}
           >
-            <div style={{ fontSize: 24, marginBottom: 8, color: isDarkMode ? '#4a9d9d' : '#1890ff' }}>
-              {category.icon}
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%'
+            }}>
+              <div style={{ 
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: category.color,
+                display: 'flex',
+                marginRight: '16px',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: '12px',
+                fontSize: '24px',
+                color: '#fff'
+              }}>
+                <img 
+                  src={category.icon} 
+                  alt={category.label}
+                  style={{ 
+                    width: '24px', 
+                    height: '24px',
+                    filter: 'brightness(0) invert(1)' // Makes SVG white
+                  }} 
+                />
+              </div>
+              <Text style={{ 
+                fontSize: '15px',
+                fontWeight: 600,
+                color: isDarkMode ? '#fff' : '#000',
+              
+              }}>
+                {category.label}
+              </Text>
             </div>
-            <Title level={4} style={{ margin: 0, color: isDarkMode ? '#fff' : '#000' }}>
-              {category.label}
-            </Title>
-            <Text style={{ fontSize: 12, color: isDarkMode ? '#999' : '#666' }}>
-              {category.description}
-            </Text>
           </Card>
         </Col>
       ))}
     </Row>
+    </>
   );
 
   const openDonationModal = (category) => {
@@ -336,17 +567,14 @@ const Giving = ({ user }) => {
 
   const GivingHistory = () => (
     <Card 
-      title={
-        <span style={{ color: isDarkMode ? '#fff' : '#000' }}>
-          <BarChartOutlined style={{ marginRight: 8 }} />
-          Giving History
-        </span>
-      }
       style={{ 
-        marginTop: 24,
-        background: isDarkMode ? '#1e1e1e' : '#ffffff',
-        border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        marginTop: 20,
+        background: isDarkMode ? '#1a1a1a' : '#ffffff',
+        border: 'none',
+        borderRadius: '24px',
+        overflow: 'hidden'
       }}
+      styles={{ body: { padding: '40px 24px' } }}
     >
       {givingHistory.length > 0 ? (
         <List
@@ -374,10 +602,10 @@ const Giving = ({ user }) => {
                 description={
                   <div>
                     <Space wrap>
-                      <Tag icon={<CalendarOutlined />}>
+                      <Tag icon={<CalendarOutlined />} style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', border: 'none', color: isDarkMode ? '#999' : '#666' }}>
                         {new Date(donation.date).toLocaleDateString()}
                       </Tag>
-                      <Tag icon={<CreditCardOutlined />}>
+                      <Tag icon={<CreditCardOutlined />} style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', border: 'none', color: isDarkMode ? '#999' : '#666' }}>
                         {donation.method || donation.paymentMethod}
                       </Tag>
                       <Tag color="green" icon={<CheckOutlined />}>
@@ -398,19 +626,27 @@ const Giving = ({ user }) => {
           )}
         />
       ) : (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <GiftOutlined style={{ fontSize: 64, color: isDarkMode ? '#444' : '#d9d9d9', marginBottom: 16 }} />
-          <Title level={4} style={{ color: isDarkMode ? '#999' : '#666' }}>No giving history yet</Title>
-          <Paragraph style={{ color: isDarkMode ? '#888' : '#999' }}>Your donations will appear here</Paragraph>
+        <div style={{ textAlign: 'center' }}>
+          <Title level={4} style={{ color: isDarkMode ? '#fff' : '#000', marginBottom: 12 }}>
+            No giving history to display yet
+          </Title>
+          <Paragraph style={{ color: isDarkMode ? '#999' : '#666', marginBottom: 24, fontSize: '14px' }}>
+            Your donations will appear here when you give
+          </Paragraph>
           <Button 
-            type="primary" 
             onClick={() => setDonationModal(true)}
             style={{
-              background: isDarkMode ? '#2d7a7a' : '#1890ff',
-              borderColor: isDarkMode ? '#2d7a7a' : '#1890ff'
+              background: '#2d7a7a',
+              borderColor: '#2d7a7a',
+              color: '#fff',
+              height: '48px',
+              padding: '0 32px',
+              borderRadius: '12px',
+              fontSize: '15px',
+              fontWeight: 600
             }}
           >
-            Make Your First Donation
+            Make your first donation
           </Button>
         </div>
       )}
@@ -443,30 +679,20 @@ const Giving = ({ user }) => {
     }}>
       {/* Header Section */}
       <div style={{ 
-        padding: '16px',
+        padding: '20px 16px',
         background: isDarkMode ? '#121212' : '#f5f5f5'
       }}>
         <Title 
           level={3} 
           style={{ 
             color: isDarkMode ? '#ffffff' : '#000000',
-            marginBottom: 8,
-            fontSize: '20px',
+            marginBottom: 0,
+            fontSize: '24px',
             fontWeight: 700
           }}
         >
-          <HeartOutlined style={{ marginRight: 8 }} />
           Give
         </Title>
-        <Paragraph 
-          style={{ 
-            color: isDarkMode ? '#999' : '#666',
-            fontSize: '14px',
-            marginBottom: 0
-          }}
-        >
-          "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver." - 2 Corinthians 9:7
-        </Paragraph>
       </div>
 
       <div style={{ padding: '0 16px 16px' }}>
@@ -486,42 +712,9 @@ const Giving = ({ user }) => {
         />
       ) : (
         <>
-          <StatsSection />
+          <GivingOptions />
           
-          <Card 
-            title={
-              <span style={{ color: isDarkMode ? '#fff' : '#000' }}>
-                <DollarOutlined style={{ marginRight: 8 }} />
-                Choose Your Giving
-              </span>
-            } 
-            style={{ 
-              marginBottom: 24,
-              background: isDarkMode ? '#1e1e1e' : '#ffffff',
-              border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
-            }}
-          >
-            <GivingOptions />
-            
-            <div style={{ textAlign: 'center' }}>
-              <Button 
-                type="primary" 
-                size="large"
-                icon={<HeartOutlined />}
-                onClick={() => setDonationModal(true)}
-                style={{
-                  background: isDarkMode ? '#2d7a7a' : '#1890ff',
-                  borderColor: isDarkMode ? '#2d7a7a' : '#1890ff',
-                  height: '48px',
-                  fontSize: '15px',
-                  borderRadius: '12px',
-                  fontWeight: 600
-                }}
-              >
-                Make a Donation
-              </Button>
-            </div>
-          </Card>
+          <StatsSection />
 
           <GivingHistory />
         </>
@@ -530,7 +723,7 @@ const Giving = ({ user }) => {
       {/* Donation Modal */}
       <Modal
         title={
-          <span>
+          <span style={{ color: isDarkMode ? '#fff' : '#000' }}>
             <GiftOutlined style={{ marginRight: 8 }} />
             Make a Donation
           </span>
@@ -539,6 +732,16 @@ const Giving = ({ user }) => {
         onCancel={() => setDonationModal(false)}
         footer={null}
         width={600}
+        styles={{
+          content: {
+            background: isDarkMode ? '#1e1e1e' : '#ffffff',
+            color: isDarkMode ? '#fff' : '#000'
+          },
+          header: {
+            background: isDarkMode ? '#1e1e1e' : '#ffffff',
+            borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+          }
+        }}
       >
         <Form
           form={form}
@@ -548,10 +751,15 @@ const Giving = ({ user }) => {
         >
           <Form.Item
             name="category"
-            label="Donation Category"
+            label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Donation Category</span>}
             rules={[{ required: true, message: 'Please select a category' }]}
           >
-            <Select placeholder="Choose what you'd like to support">
+            <Select 
+              placeholder="Choose what you'd like to support"
+              style={{
+                background: isDarkMode ? '#121212' : '#ffffff',
+              }}
+            >
               {givingCategories.map(category => (
                 <Option key={category.key} value={category.key}>
                   {category.label} - {category.description}
@@ -564,14 +772,18 @@ const Giving = ({ user }) => {
             <Col span={16}>
               <Form.Item
                 name="amount"
-                label={`Amount (${currency})`}
+                label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Amount ({currency})</span>}
                 rules={[
                   { required: true, message: 'Please enter amount' },
                   { type: 'number', min: 1, message: 'Amount must be at least 1' }
                 ]}
               >
                 <InputNumber
-                  style={{ width: '100%' }}
+                  style={{ 
+                    width: '100%',
+                    background: isDarkMode ? '#121212' : '#ffffff',
+                    color: isDarkMode ? '#fff' : '#000'
+                  }}
                   prefix={getCurrencySymbol(currency)}
                   placeholder="0.00"
                   step={0.01}
@@ -580,11 +792,14 @@ const Giving = ({ user }) => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Currency">
+              <Form.Item label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Currency</span>}>
                 <Select 
                   value={currency} 
                   onChange={setCurrency}
                   placeholder="Select currency"
+                  style={{
+                    background: isDarkMode ? '#121212' : '#ffffff',
+                  }}
                 >
                   {Object.entries(currencies).map(([code, info]) => (
                     <Option key={code} value={code}>
@@ -592,7 +807,7 @@ const Giving = ({ user }) => {
                     </Option>
                   ))}
                 </Select>
-                <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                <div style={{ fontSize: '11px', color: isDarkMode ? '#888' : '#666', marginTop: '4px' }}>
                   <CreditCardOutlined /> = Paystack supported, <BankOutlined /> = Contact church for other payment methods
                 </div>
               </Form.Item>
@@ -601,11 +816,16 @@ const Giving = ({ user }) => {
 
           <Form.Item
             name="note"
-            label="Note (Optional)"
+            label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Note (Optional)</span>}
           >
             <Input.TextArea 
               rows={2} 
               placeholder="Add a personal note or prayer request..."
+              style={{
+                background: isDarkMode ? '#121212' : '#ffffff',
+                color: isDarkMode ? '#fff' : '#000',
+                borderColor: isDarkMode ? '#2a2a2a' : '#d9d9d9'
+              }}
             />
           </Form.Item>
 
@@ -614,15 +834,36 @@ const Giving = ({ user }) => {
             description="Your payment will be processed securely via Paystack. You will receive an email confirmation after your donation is processed."
             type="success"
             showIcon
-            style={{ marginBottom: 16 }}
+            style={{ 
+              marginBottom: 16,
+              background: isDarkMode ? 'rgba(45, 122, 122, 0.1)' : '#f6ffed',
+              border: `1px solid ${isDarkMode ? 'rgba(45, 122, 122, 0.3)' : '#b7eb8f'}`,
+              color: isDarkMode ? '#fff' : '#000'
+            }}
           />
 
           <Form.Item>
             <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-              <Button onClick={() => setDonationModal(false)}>
+              <Button 
+                onClick={() => setDonationModal(false)}
+                style={{
+                  background: isDarkMode ? '#2a2a2a' : '#f5f5f5',
+                  color: isDarkMode ? '#fff' : '#000',
+                  borderColor: isDarkMode ? '#2a2a2a' : '#d9d9d9'
+                }}
+              >
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit" loading={loading} size="large">
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                loading={loading} 
+                size="large"
+                style={{
+                  background: '#2d7a7a',
+                  borderColor: '#2d7a7a'
+                }}
+              >
                 Donate
               </Button>
             </Space>
