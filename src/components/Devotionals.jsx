@@ -38,12 +38,15 @@ import {
   BulbOutlined,
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
-import colors from '../styles/colors';
+import { useTheme } from '../contexts/ThemeContext';
+import { getColors } from '../styles/colors';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const Devotionals = ({ user }) => {
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
   const [loading, setLoading] = useState(false);
   const [devotionals, setDevotionals] = useState([]);
   const [selectedDevotional, setSelectedDevotional] = useState(null);
@@ -229,21 +232,21 @@ const Devotionals = ({ user }) => {
         marginBottom: 16, 
         cursor: 'pointer',
         borderRadius: 12,
-        border: `1px solid ${colors.mint}`,
-        boxShadow: `0 2px 8px ${colors.darkBlue}10`,
-        backgroundColor: colors.cardBackground
+        border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`,
+        boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
+        backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff'
       }}
       onClick={() => openDevotional(devotional)}
       actions={[
         <Button 
           type="text" 
-          icon={devotional.isLiked ? <HeartFilled style={{ color: colors.error }} /> : <HeartOutlined />}
+          icon={devotional.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
           onClick={(e) => {
             e.stopPropagation();
             handleLike(devotional.id);
           }}
           size="small"
-          style={{ color: colors.textSecondary }}
+          style={{ color: isDarkMode ? '#888' : '#666' }}
         >
           {devotional.likes || 0}
         </Button>,
@@ -255,7 +258,7 @@ const Devotionals = ({ user }) => {
             openDevotional(devotional);
           }}
           size="small"
-          style={{ color: colors.textSecondary }}
+          style={{ color: isDarkMode ? '#888' : '#666' }}
         >
           {devotional.comments || 0}
         </Button>,
@@ -272,9 +275,9 @@ const Devotionals = ({ user }) => {
           }}
           size="small"
           style={{
-            backgroundColor: devotional.isRead ? colors.success : colors.primary,
-            borderColor: devotional.isRead ? colors.success : colors.primary,
-            color: colors.textWhite,
+            backgroundColor: devotional.isRead ? '#52c41a' : '#2d7a7a',
+            borderColor: devotional.isRead ? '#52c41a' : '#2d7a7a',
+            color: '#ffffff',
             fontWeight: 'bold'
           }}
         >
@@ -285,7 +288,7 @@ const Devotionals = ({ user }) => {
       <Card.Meta
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{devotional.title}</span>
+            <span style={{ color: colors.text }}>{devotional.title}</span>
             {devotional.isRead && (
               <Badge status="success" text="Completed" />
             )}
@@ -293,17 +296,17 @@ const Devotionals = ({ user }) => {
         }
         description={
           <div>
-            <Paragraph ellipsis={{ rows: 3 }}>
+            <Paragraph ellipsis={{ rows: 3 }} style={{ color: isDarkMode ? '#888' : '#666' }}>
               {devotional.content}
             </Paragraph>
             <Space wrap style={{ marginTop: 8 }}>
-              <Tag color={colors.primary}>
+              <Tag color="#2d7a7a">
                 <CalendarOutlined /> {new Date(devotional.date).toLocaleDateString()}
               </Tag>
-              <Tag color={colors.success}>
+              <Tag color="#52c41a">
                 <BookOutlined /> {devotional.bibleVerse}
               </Tag>
-              <Tag color={colors.warning}>
+              <Tag color="#faad14">
                 <ClockCircleOutlined /> {devotional.readTime} min read
               </Tag>
             </Space>
@@ -316,46 +319,46 @@ const Devotionals = ({ user }) => {
   const StatsSection = () => (
     <Card style={{ 
       marginBottom: 24,
-      backgroundColor: colors.cardBackground,
-      border: `1px solid ${colors.mint}`,
+      backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+      border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`,
       borderRadius: 12
     }}>
       <Row gutter={16}>
         <Col xs={12} sm={6}>
           <Statistic
-            title="Daily Streak"
+            title={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Daily Streak</span>}
             value={streak}
             prefix={<FireOutlined />}
             suffix="days"
-            valueStyle={{ color: colors.error }}
+            valueStyle={{ color: '#ff4d4f' }}
           />
         </Col>
         <Col xs={12} sm={6}>
           <div>
-            <Text strong style={{ color: colors.textPrimary }}>Monthly Progress</Text>
+            <Text strong style={{ color: colors.text }}>Monthly Progress</Text>
             <Progress 
               percent={monthlyProgress} 
               strokeColor={{
-                '0%': colors.primary,
-                '100%': colors.success,
+                '0%': '#2d7a7a',
+                '100%': '#52c41a',
               }}
             />
           </div>
         </Col>
         <Col xs={12} sm={6}>
           <Statistic
-            title="This Month"
+            title={<span style={{ color: isDarkMode ? '#888' : '#666' }}>This Month</span>}
             value={Math.floor(monthlyProgress * 30 / 100)}
             suffix="/ 30"
-            valueStyle={{ color: colors.primary }}
+            valueStyle={{ color: '#2d7a7a' }}
           />
         </Col>
         <Col xs={12} sm={6}>
           <Statistic
-            title="Total Read"
+            title={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Total Read</span>}
             value={devotionals.filter(d => d.isRead).length}
             prefix={<TrophyOutlined />}
-            valueStyle={{ color: colors.success }}
+            valueStyle={{ color: '#52c41a' }}
           />
         </Col>
       </Row>
@@ -369,10 +372,10 @@ const Devotionals = ({ user }) => {
       minHeight: '100vh' 
     }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ color: colors.textPrimary }}>
+        <Title level={2} style={{ color: colors.text }}>
           <CompassOutlined /> Daily Devotionals
         </Title>
-        <Paragraph type="secondary" style={{ color: colors.textSecondary }}>
+        <Paragraph type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
           Grow closer to God through daily Bible study and reflection
         </Paragraph>
       </div>
@@ -405,20 +408,24 @@ const Devotionals = ({ user }) => {
         footer={null}
         width="90%"
         style={{ maxWidth: 700 }}
+        styles={{
+          content: { background: isDarkMode ? '#1a1a1a' : '#ffffff' },
+          header: { background: isDarkMode ? '#1a1a1a' : '#ffffff', borderBottom: 'none' }
+        }}
         centered
       >
         {selectedDevotional && (
           <div>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Title level={2}>{selectedDevotional.title}</Title>
+              <Title level={2} style={{ color: colors.text }}>{selectedDevotional.title}</Title>
               <Space wrap>
-                <Tag color={colors.primary}>
+                <Tag color="#2d7a7a">
                   <CalendarOutlined /> {new Date(selectedDevotional.date).toLocaleDateString()}
                 </Tag>
-                <Tag color={colors.success}>
+                <Tag color="#52c41a">
                   <BookOutlined /> {selectedDevotional.bibleVerse}
                 </Tag>
-                <Tag color={colors.warning}>
+                <Tag color="#faad14">
                   <ClockCircleOutlined /> {selectedDevotional.readTime} min read
                 </Tag>
               </Space>
@@ -426,62 +433,62 @@ const Devotionals = ({ user }) => {
 
             <Card style={{ 
               marginBottom: 16,
-              backgroundColor: colors.cardBackground,
-              border: `1px solid ${colors.mint}`
+              backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+              border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
             }}>
               <Paragraph style={{ 
                 fontSize: 16, 
                 lineHeight: 1.8,
-                color: colors.textPrimary
+                color: colors.text
               }}>
                 {selectedDevotional.content}
               </Paragraph>
 
               {selectedDevotional.bibleText && (
                 <div style={{ 
-                  background: colors.surfaceBackground, 
+                  background: isDarkMode ? '#121212' : '#f5f5f5', 
                   padding: 16, 
                   borderRadius: 8,
                   marginTop: 16,
-                  borderLeft: `4px solid ${colors.primary}`
+                  borderLeft: '4px solid #2d7a7a'
                 }}>
-                  <Text italic style={{ color: colors.textPrimary }}>"{selectedDevotional.bibleText}"</Text>
+                  <Text italic style={{ color: colors.text }}>"{selectedDevotional.bibleText}"</Text>
                   <br />
-                  <Text strong style={{ color: colors.textSecondary }}>- {selectedDevotional.bibleVerse}</Text>
+                  <Text strong style={{ color: isDarkMode ? '#888' : '#666' }}>- {selectedDevotional.bibleVerse}</Text>
                 </div>
               )}
 
               {selectedDevotional.prayer && (
                 <div style={{ 
-                  background: colors.cardBackground, 
+                  background: isDarkMode ? '#1a1a1a' : '#ffffff', 
                   padding: 16, 
                   borderRadius: 8,
                   marginTop: 16,
-                  borderLeft: `4px solid ${colors.warning}`,
-                  border: `1px solid ${colors.mint}`
+                  borderLeft: '4px solid #faad14',
+                  border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
                 }}>
-                  <Title level={4} style={{ color: colors.textPrimary }}>
+                  <Title level={4} style={{ color: colors.text }}>
                     <HeartOutlined /> Prayer
                   </Title>
-                  <Paragraph italic style={{ color: colors.textPrimary }}>{selectedDevotional.prayer}</Paragraph>
+                  <Paragraph italic style={{ color: colors.text }}>{selectedDevotional.prayer}</Paragraph>
                 </div>
               )}
 
               {selectedDevotional.reflection && (
                 <div style={{ 
-                  background: colors.surfaceBackground, 
+                  background: isDarkMode ? '#121212' : '#f5f5f5', 
                   padding: 16, 
                   borderRadius: 8,
                   marginTop: 16,
-                  borderLeft: `4px solid ${colors.success}`
+                  borderLeft: '4px solid #52c41a'
                 }}>
-                  <Title level={4} style={{ color: colors.textPrimary }}>
+                  <Title level={4} style={{ color: colors.text }}>
                     <BulbOutlined /> Reflection Questions
                   </Title>
                   <ul>
                     {selectedDevotional.reflection.map((question, index) => (
                       <li key={index}>
-                        <Paragraph style={{ color: colors.textPrimary }}>{question}</Paragraph>
+                        <Paragraph style={{ color: colors.text }}>{question}</Paragraph>
                       </li>
                     ))}
                   </ul>
@@ -492,9 +499,9 @@ const Devotionals = ({ user }) => {
             <Space wrap style={{ marginBottom: 16 }}>
               <Button 
                 type="text" 
-                icon={selectedDevotional.isLiked ? <HeartFilled style={{ color: colors.error }} /> : <HeartOutlined />}
+                icon={selectedDevotional.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
                 onClick={() => handleLike(selectedDevotional.id)}
-                style={{ color: colors.textSecondary }}
+                style={{ color: isDarkMode ? '#888' : '#666' }}
               >
                 {selectedDevotional.likes || 0} {selectedDevotional.isLiked ? 'Liked' : 'Like'}
               </Button>
@@ -504,8 +511,8 @@ const Devotionals = ({ user }) => {
                   icon={<CheckOutlined />}
                   onClick={() => markAsRead(selectedDevotional.id)}
                   style={{
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary
+                    backgroundColor: '#2d7a7a',
+                    borderColor: '#2d7a7a'
                   }}
                 >
                   Mark as Read
@@ -513,9 +520,9 @@ const Devotionals = ({ user }) => {
               )}
             </Space>
 
-            <Divider style={{ borderColor: colors.mint }} />
+            <Divider style={{ borderColor: isDarkMode ? '#2a2a2a' : '#e0e0e0' }} />
 
-            <Title level={4} style={{ color: colors.textPrimary }}>
+            <Title level={4} style={{ color: colors.text }}>
               <MessageOutlined /> Comments ({comments.length})
             </Title>
 

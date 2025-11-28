@@ -28,6 +28,8 @@ import {
   CloudUploadOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { getColors } from '../styles/colors';
 import ApiClient from '../services/apiClient';
 import dayjs from 'dayjs';
 
@@ -37,6 +39,8 @@ const { Search } = Input;
 
 const SermonNotesPage = () => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -282,7 +286,12 @@ const SermonNotesPage = () => {
 
   const NoteCard = ({ note }) => (
     <Card
-      style={{ marginBottom: 16, borderRadius: '12px' }}
+      style={{ 
+        marginBottom: 16, 
+        borderRadius: '12px',
+        backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+        border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
+      }}
       actions={[
         <Button 
           type="text" 
@@ -304,41 +313,41 @@ const SermonNotesPage = () => {
       <Card.Meta
         title={
           <Space>
-            <FileTextOutlined />
-            <Text strong>{note.title}</Text>
+            <FileTextOutlined style={{ color: colors.text }} />
+            <Text strong style={{ color: colors.text }}>{note.title}</Text>
           </Space>
         }
         description={
           <div>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Space>
-                <CalendarOutlined />
-                <Text type="secondary">{dayjs(note.date).format('MMMM D, YYYY')}</Text>
-                <Tag color="blue">{note.speaker}</Tag>
+                <CalendarOutlined style={{ color: isDarkMode ? '#888' : '#666' }} />
+                <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>{dayjs(note.date).format('MMMM D, YYYY')}</Text>
+                <Tag color="#2d7a7a">{note.speaker}</Tag>
               </Space>
               
               {note.scripture && (
                 <div>
-                  <Text strong>Scripture: </Text>
-                  <Text>{note.scripture}</Text>
+                  <Text strong style={{ color: colors.text }}>Scripture: </Text>
+                  <Text style={{ color: colors.text }}>{note.scripture}</Text>
                 </div>
               )}
               
               {note.keyPoints && (
                 <div>
-                  <Text strong>Key Points:</Text>
-                  <Paragraph ellipsis={{ rows: 2 }}>{note.keyPoints}</Paragraph>
+                  <Text strong style={{ color: colors.text }}>Key Points:</Text>
+                  <Paragraph ellipsis={{ rows: 2 }} style={{ color: isDarkMode ? '#888' : '#666' }}>{note.keyPoints}</Paragraph>
                 </div>
               )}
               
               {note.personalNotes && (
                 <div>
-                  <Text strong>Personal Notes:</Text>
-                  <Paragraph ellipsis={{ rows: 2 }}>{note.personalNotes}</Paragraph>
+                  <Text strong style={{ color: colors.text }}>Personal Notes:</Text>
+                  <Paragraph ellipsis={{ rows: 2 }} style={{ color: isDarkMode ? '#888' : '#666' }}>{note.personalNotes}</Paragraph>
                 </div>
               )}
               
-              <Text type="secondary" style={{ fontSize: '12px' }}>
+              <Text type="secondary" style={{ fontSize: '12px', color: isDarkMode ? '#888' : '#666' }}>
                 Last updated: {dayjs(note.updatedAt).format('MMM D, YYYY h:mm A')}
               </Text>
             </Space>
@@ -349,13 +358,13 @@ const SermonNotesPage = () => {
   );
 
   return (
-    <div style={{ padding: '16px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div style={{ padding: '16px', background: colors.background, minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <Title level={2} style={{ marginBottom: 8 }}>
+        <Title level={2} style={{ marginBottom: 8, color: colors.text }}>
           <BookOutlined /> Sermon Notes
         </Title>
-        <Text type="secondary">
+        <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
           Keep track of your spiritual insights and reflections
         </Text>
       </div>
@@ -404,7 +413,12 @@ const SermonNotesPage = () => {
           ))}
         </div>
       ) : (
-        <Card style={{ textAlign: 'center', padding: '50px 0' }}>
+        <Card style={{ 
+          textAlign: 'center', 
+          padding: '50px 0',
+          backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+          border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
+        }}>
           <Empty 
             description={
               searchTerm 
@@ -436,6 +450,10 @@ const SermonNotesPage = () => {
         }}
         footer={null}
         width={600}
+        styles={{
+          content: { background: isDarkMode ? '#1a1a1a' : '#ffffff' },
+          header: { background: isDarkMode ? '#1a1a1a' : '#ffffff', borderBottom: 'none' }
+        }}
       >
         <Form
           form={form}

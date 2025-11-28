@@ -77,22 +77,22 @@ const Layout = ({ children }) => {
     },
     {
       key: '/communities',
-      icon: <img src={ConnectIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
+      icon: ConnectIcon,
       label: 'Connect',
     },
     {
       key: '/giving',
-      icon: <img src={GiveIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
+      icon: GiveIcon,
       label: 'Give',
     },
     {
       key: '/resources',
-      icon: <img src={ResourcesIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
+      icon: ResourcesIcon,
       label: 'Resources',
     },
     {
       key: '/more',
-      icon: <img src={MoreIcon} style={{ width: '24px', height: '24px', filter: isDarkMode ? 'none' : 'invert(1)' }} />,
+      icon: MoreIcon,
       label: 'More',
     },
   ];
@@ -110,10 +110,32 @@ const Layout = ({ children }) => {
   };
 
   const BottomNavItem = ({ item }) => {
-    // Special handling for home route
+    // Special handling for home route and resources route
     const isActive = item.key === '/' 
       ? location.pathname === '/'
+      : item.key === '/resources'
+      ? location.pathname === '/media' || location.pathname.startsWith('/media/')
       : location.pathname === item.key || location.pathname.startsWith(item.key + '/');
+    
+    // Determine if this is a custom SVG icon (string path) or an Ant Design icon (React element)
+    const isCustomIcon = typeof item.icon === 'string';
+    
+    // Calculate filter for custom SVG icons
+    const getIconFilter = () => {
+      if (!isCustomIcon) return undefined;
+      
+      if (isActive) {
+        // Active state: show teal color
+        return isDarkMode 
+          ? 'brightness(0) saturate(100%) invert(64%) sepia(13%) saturate(1024%) hue-rotate(130deg) brightness(91%) contrast(89%)' // #4a9d9d
+          : 'brightness(0) saturate(100%) invert(44%) sepia(15%) saturate(1474%) hue-rotate(130deg) brightness(95%) contrast(92%)'; // #2d7a7a
+      } else {
+        // Inactive state: show gray
+        return isDarkMode
+          ? 'brightness(0) saturate(100%) invert(57%) sepia(0%) saturate(0%) hue-rotate(173deg) brightness(92%) contrast(87%)' // #888
+          : 'brightness(0) saturate(100%) invert(42%) sepia(0%) saturate(0%) hue-rotate(173deg) brightness(95%) contrast(92%)'; // #666
+      }
+    };
     
     return (
       <div
@@ -137,7 +159,20 @@ const Layout = ({ children }) => {
           marginBottom: '2px',
           color: isActive ? (isDarkMode ? '#4a9d9d' : '#2d7a7a') : (isDarkMode ? '#888' : '#666')
         }}>
-          {item.icon}
+          {isCustomIcon ? (
+            <img 
+              src={item.icon} 
+              style={{ 
+                width: '24px', 
+                height: '24px', 
+                filter: getIconFilter(),
+                transition: 'filter 0.3s'
+              }} 
+              alt={item.label}
+            />
+          ) : (
+            item.icon
+          )}
         </div>
         <span>{item.label}</span>
       </div>

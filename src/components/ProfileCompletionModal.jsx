@@ -27,6 +27,7 @@ const ProfileCompletionModal = ({ visible, onClose, user }) => {
     setLoading(true);
     try {
       const profileData = {
+        userId: user?.memberId || user?.id || user?._id,
         phone: values.phone,
         dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD'),
         address: values.address,

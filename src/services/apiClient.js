@@ -90,8 +90,9 @@ class ApiClient {
   }
 
   async updateProfile(profileData) {
+    // Using POST as a workaround for Next.js route issues
     return this.request('/mobile/profile', {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify(profileData),
     });
   }
