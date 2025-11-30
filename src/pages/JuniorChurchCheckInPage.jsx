@@ -38,7 +38,7 @@ const JuniorChurchCheckInPage = () => {
   
   const [children, setChildren] = useState([]);
   const [selectedChildren, setSelectedChildren] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [checkInStatus, setCheckInStatus] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,6 +50,9 @@ const JuniorChurchCheckInPage = () => {
 
   const loadCheckInStatus = async () => {
     try {
+      if (!checkInStatus) {
+        setLoading(true);
+      }
       setRefreshing(true);
       const memberId = user.memberId || user.id;
       const response = await ApiClient.getDailyCheckInStatus(memberId);
@@ -68,6 +71,7 @@ const JuniorChurchCheckInPage = () => {
       console.error('Error loading check-in status:', error);
       message.error('Failed to load children');
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -133,6 +137,21 @@ const JuniorChurchCheckInPage = () => {
           type="warning"
           showIcon
         />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ 
+        ...pageStyle,
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        flexDirection: 'column'
+      }}>
+        <Spin size="large" style={{ color: colors.primary }} />
+        <Text style={{ marginTop: 16, color: colors.text }}>Loading children...</Text>
       </div>
     );
   }
