@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL =  'https://admin.sycamore.church/api';
+const API_BASE_URL =  'http://localhost:3000/api';
 
 class ApiClient {
   constructor() {
@@ -127,10 +127,14 @@ class ApiClient {
     return this.request(`/mobile/events?type=${type}&page=${page}&limit=${limit}`);
   }
 
-  async checkInToEvent(eventId) {
+  async checkInToEvent(eventId, eventDate = null) {
+    const payload = { eventId };
+    if (eventDate) {
+      payload.eventDate = eventDate;
+    }
     return this.request('/mobile/events', {
       method: 'POST',
-      body: JSON.stringify({ eventId }),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -230,6 +234,18 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(childData)
     });
+  }
+
+  // Daily check-in for children (not tied to event)
+  async dailyChildCheckIn(parentId, childrenIds) {
+    return this.request('/mobile/children/checkin', {
+      method: 'POST',
+      body: JSON.stringify({ parentId, childrenIds })
+    });
+  }
+
+  async getDailyCheckInStatus(parentId) {
+    return this.request(`/mobile/children/checkin?parentId=${parentId}`);
   }
 
   // Self-attendance management

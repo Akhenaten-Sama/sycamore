@@ -21,6 +21,7 @@ import BiblePage from './pages/BiblePage';
 import RequestFormsPage from './pages/RequestFormsPage';
 import WatchLivePage from './pages/WatchLivePage';
 import MorePage from './pages/MorePage';
+import JuniorChurchCheckInPage from './pages/JuniorChurchCheckInPage';
 import { getAntdTheme } from './styles/colors';
 
 const AppContent = () => {
@@ -54,6 +55,7 @@ const AppContent = () => {
                   <Route path="/bible" element={<BiblePage />} />
                   <Route path="/requests" element={<RequestFormsPage />} />
                   <Route path="/watch-live" element={<WatchLivePage />} />
+                  <Route path="/junior-church-checkin" element={<JuniorChurchCheckInPage />} />
                   <Route path="/more" element={<MorePage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

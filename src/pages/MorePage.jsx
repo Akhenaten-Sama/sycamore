@@ -10,7 +10,8 @@ import {
   StarOutlined,
   BulbOutlined,
   LogoutOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  UserAddOutlined
 } from '@ant-design/icons';
 import { Avatar, Badge, Modal } from 'antd';
 import { getColors } from '../styles/colors';
@@ -63,6 +64,11 @@ const MorePage = () => {
   };
 
   const menuItems = [
+    {
+      icon: <UserAddOutlined style={{ fontSize: '24px', color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />,
+      label: 'Junior Church Check-In',
+      onClick: () => navigate('/junior-church-checkin')
+    },
     {
       icon: <CalendarOutlined style={{ fontSize: '24px', color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />,
       label: 'Attendance Streak',

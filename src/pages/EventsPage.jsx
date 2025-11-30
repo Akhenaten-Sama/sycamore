@@ -64,7 +64,18 @@ const EventsPage = () => {
       const response = await ApiClient.getEvents('upcoming', page);
       console.log('Events response:', response);
       
-      if (response && Array.isArray(response)) {
+      // Handle response with data property (mobile API format)
+      if (response && response.data && Array.isArray(response.data)) {
+        if (append) {
+          setEvents(prevEvents => [...prevEvents, ...response.data]);
+        } else {
+          setEvents(response.data);
+        }
+        
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
+      } else if (response && Array.isArray(response)) {
         if (append) {
           setEvents(prevEvents => [...prevEvents, ...response]);
         } else {
@@ -379,7 +390,7 @@ const EventsPage = () => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        minHeight: '50vh',
+        minHeight: '100vh',
         flexDirection: 'column',
         background: colors.background
       }}>

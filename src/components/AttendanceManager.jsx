@@ -53,12 +53,21 @@ const AttendanceManager = ({ visible, onClose, event }) => {
   const loadChildren = async () => {
     try {
       const memberId = user.memberId || user.id;
+      console.log('Loading children for memberId:', memberId);
       const response = await ApiClient.getChildren(memberId);
-      if (response) {
+      console.log('Children response:', response);
+      
+      if (response?.success && response.data) {
+        setChildren(response.data);
+      } else if (Array.isArray(response)) {
+        // Fallback for direct array response
         setChildren(response);
+      } else {
+        setChildren([]);
       }
     } catch (error) {
       console.error('Error loading children:', error);
+      setChildren([]);
     }
   };
 
@@ -74,10 +83,14 @@ const AttendanceManager = ({ visible, onClose, event }) => {
 
       const response = await ApiClient.addChild(childData);
       if (response?.success) {
-        message.success('Child added successfully!');
+        if (response.isDuplicate) {
+          message.warning('This child is already registered!');
+        } else {
+          message.success('Child registered successfully!');
+        }
         addChildForm.resetFields();
         setAddChildModalVisible(false);
-        loadChildren();
+        await loadChildren(); // Reload children list
       }
     } catch (error) {
       console.error('Error adding child:', error);
@@ -170,11 +183,25 @@ const AttendanceManager = ({ visible, onClose, event }) => {
                       <Space>
                         <Avatar icon={<UserAddOutlined />} />
                         <div>
-                          <Text strong>{child.firstName} {child.lastName}</Text>
-                          <br />
+                          <div>
+                            <Text strong>{child.firstName} {child.lastName}</Text>
+                            {child.class && (
+                              <Tag color="blue" style={{ marginLeft: 8 }}>
+                                {child.class.charAt(0).toUpperCase() + child.class.slice(1)}
+                              </Tag>
+                            )}
+                          </div>
                           <Text type="secondary" style={{ fontSize: 12 }}>
                             {dayjs().diff(dayjs(child.dateOfBirth), 'year')} years old
+                            {child.barcodeId && ` • ID: ${child.barcodeId}`}
                           </Text>
+                          {child.allergies && (
+                            <div>
+                              <Text type="danger" style={{ fontSize: 11 }}>
+                                ⚠️ Allergies: {child.allergies}
+                              </Text>
+                            </div>
+                          )}
                         </div>
                       </Space>
                     </Checkbox>
@@ -197,17 +224,25 @@ const AttendanceManager = ({ visible, onClose, event }) => {
       </Modal>
 
       <Modal
-        title="Add Child/Ward"
+        title="Register Child for Junior Church"
         open={addChildModalVisible}
         onCancel={() => setAddChildModalVisible(false)}
         footer={null}
-        width={500}
+        width={700}
       >
+        <Alert
+          message="Complete Junior Church Registration"
+          description="This will register your child for the Junior Church system with full check-in/check-out capabilities."
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
         <Form
           form={addChildForm}
           layout="vertical"
           onFinish={handleAddChild}
         >
+          <Divider orientation="left">Child Information</Divider>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -215,7 +250,7 @@ const AttendanceManager = ({ visible, onClose, event }) => {
                 label="First Name"
                 rules={[{ required: true, message: 'Please enter first name' }]}
               >
-                <Input placeholder="First Name" />
+                <Input placeholder="Child's first name" />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -224,7 +259,7 @@ const AttendanceManager = ({ visible, onClose, event }) => {
                 label="Last Name"
                 rules={[{ required: true, message: 'Please enter last name' }]}
               >
-                <Input placeholder="Last Name" />
+                <Input placeholder="Child's last name" />
               </Form.Item>
             </Col>
           </Row>
@@ -249,20 +284,91 @@ const AttendanceManager = ({ visible, onClose, event }) => {
             </Select>
           </Form.Item>
 
+          <Divider orientation="left">Emergency Contact</Divider>
+          <Alert
+            message="Emergency contact information is required for Junior Church registration"
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+          
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name={['emergencyContact', 'name']}
+                label="Emergency Contact Name"
+                rules={[{ required: true, message: 'Required' }]}
+                initialValue={`${user?.firstName || ''} ${user?.lastName || ''}`}
+              >
+                <Input placeholder="Full name" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name={['emergencyContact', 'phone']}
+                label="Emergency Contact Phone"
+                rules={[
+                  { required: true, message: 'Required' },
+                  { pattern: /^[+]?[\d\s()-]+$/, message: 'Invalid phone number' }
+                ]}
+                initialValue={user?.phone || ''}
+              >
+                <Input placeholder="+1234567890" />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item
-            name="specialNeeds"
-            label="Special Needs (Optional)"
+            name={['emergencyContact', 'relationship']}
+            label="Relationship to Child"
+            rules={[{ required: true, message: 'Required' }]}
+            initialValue="parent"
           >
-            <Input.TextArea rows={2} placeholder="Any special needs or requirements" />
+            <Select>
+              <Option value="parent">Parent</Option>
+              <Option value="father">Father</Option>
+              <Option value="mother">Mother</Option>
+              <Option value="guardian">Guardian</Option>
+              <Option value="grandparent">Grandparent</Option>
+              <Option value="aunt">Aunt</Option>
+              <Option value="uncle">Uncle</Option>
+              <Option value="other">Other</Option>
+            </Select>
           </Form.Item>
 
+          <Divider orientation="left">Medical Information</Divider>
+          
+          <Form.Item
+            name="allergies"
+            label="Allergies"
+            extra="List any food or environmental allergies (e.g., Peanuts, Shellfish, Bee stings)"
+          >
+            <Input placeholder="None or list allergies separated by commas" />
+          </Form.Item>
+
+          <Form.Item
+            name="specialNeeds"
+            label="Medical Notes / Special Needs"
+            extra="Include any medications, medical conditions, or special requirements"
+          >
+            <Input.TextArea rows={3} placeholder="Any important medical information or special needs" />
+          </Form.Item>
+
+          <Alert
+            message="Pickup Authorization"
+            description="A unique barcode ID will be generated for secure check-in/check-out. You (as parent/guardian) will be automatically authorized for pickup."
+            type="success"
+            showIcon
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+
           <Form.Item>
-            <Space>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
               <Button onClick={() => setAddChildModalVisible(false)}>
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                Add Child/Ward
+              <Button type="primary" htmlType="submit" loading={loading} icon={<PlusOutlined />}>
+                Register Child
               </Button>
             </Space>
           </Form.Item>
