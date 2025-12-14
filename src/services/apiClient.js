@@ -524,6 +524,20 @@ class ApiClient {
       body: JSON.stringify(formData)
     });
   }
+
+  // Testimonies API
+  async getTestimonies(page = 1, limit = 20, userId = null) {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    if (userId) params.append('userId', userId);
+    return this.request(`/mobile/testimonies?${params}`);
+  }
+
+  async submitTestimony(testimonyData) {
+    return this.request('/mobile/testimonies', {
+      method: 'POST',
+      body: JSON.stringify(testimonyData)
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -769,10 +769,28 @@ const Giving = ({ user }) => {
           </Form.Item>
 
           <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Currency</span>}>
+                <Select 
+                  value={currency} 
+                  onChange={setCurrency}
+                  placeholder="Select currency"
+                  style={{
+                    background: isDarkMode ? '#121212' : '#ffffff',
+                  }}
+                >
+                  {Object.entries(currencies).map(([code, info]) => (
+                    <Option key={code} value={code}>
+                      {info.symbol} {code}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
             <Col span={16}>
               <Form.Item
                 name="amount"
-                label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Amount ({currency})</span>}
+                label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Amount</span>}
                 rules={[
                   { required: true, message: 'Please enter amount' },
                   { type: 'number', min: 1, message: 'Amount must be at least 1' }
@@ -791,28 +809,23 @@ const Giving = ({ user }) => {
                 />
               </Form.Item>
             </Col>
-            <Col span={8}>
-              <Form.Item label={<span style={{ color: isDarkMode ? '#fff' : '#000' }}>Currency</span>}>
-                <Select 
-                  value={currency} 
-                  onChange={setCurrency}
-                  placeholder="Select currency"
-                  style={{
-                    background: isDarkMode ? '#121212' : '#ffffff',
-                  }}
-                >
-                  {Object.entries(currencies).map(([code, info]) => (
-                    <Option key={code} value={code}>
-                      {info.symbol} {code} {info.paystack ? <CreditCardOutlined /> : <BankOutlined />}
-                    </Option>
-                  ))}
-                </Select>
-                <div style={{ fontSize: '11px', color: isDarkMode ? '#888' : '#666', marginTop: '4px' }}>
-                  <CreditCardOutlined /> = Paystack supported, <BankOutlined /> = Contact church for other payment methods
-                </div>
-              </Form.Item>
-            </Col>
           </Row>
+
+          <Alert
+            message={isPaystackSupported(currency) ? "Paystack supported" : "Contact church for payment"}
+            description={isPaystackSupported(currency) 
+              ? "This currency supports instant payment via Paystack."
+              : "Please contact the church for alternative payment methods for this currency."}
+            type={isPaystackSupported(currency) ? "success" : "info"}
+            showIcon
+            icon={isPaystackSupported(currency) ? <CreditCardOutlined /> : <BankOutlined />}
+            style={{ 
+              marginBottom: 16,
+              background: isDarkMode ? 'rgba(45, 122, 122, 0.1)' : '#f6ffed',
+              border: `1px solid ${isDarkMode ? 'rgba(45, 122, 122, 0.3)' : '#b7eb8f'}`,
+              color: isDarkMode ? '#fff' : '#000'
+            }}
+          />
 
           <Form.Item
             name="note"

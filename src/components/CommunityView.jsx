@@ -35,13 +35,27 @@ import {
   PlusOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import ApiClient from '../services/apiClient';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
+const getColors = (isDarkMode) => ({
+  background: isDarkMode ? '#121212' : '#f0f2f5',
+  cardBackground: isDarkMode ? '#1e1e1e' : '#ffffff',
+  text: isDarkMode ? '#ffffff' : '#000000',
+  textSecondary: isDarkMode ? '#a0a0a0' : '#666666',
+  border: isDarkMode ? '#2a2a2a' : '#f0f0f0',
+  hover: isDarkMode ? '#2a2a2a' : '#fafafa',
+  inputBackground: isDarkMode ? '#121212' : '#ffffff',
+  divider: isDarkMode ? '#2a2a2a' : '#e8e8e8'
+});
+
 const CommunityView = ({ communityId, onBack }) => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
   const [community, setCommunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('posts');
@@ -215,13 +229,14 @@ const CommunityView = ({ communityId, onBack }) => {
     };
     
     return (
-      <div>
+      <div style={{ background: colors.cardBackground, marginBottom: 8, padding: 16, borderRadius: 8 }}>
         <List.Item
           actions={[
             <Button 
               type="text" 
               icon={isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
               onClick={() => handleLikePost(post.id)}
+              style={{ color: colors.text }}
             >
               {post.likes?.length || 0}
             </Button>,
@@ -229,6 +244,7 @@ const CommunityView = ({ communityId, onBack }) => {
               type="text" 
               icon={<MessageOutlined />}
               onClick={() => setShowComments(!showComments)}
+              style={{ color: colors.text }}
             >
               {comments.length || 0}
             </Button>
@@ -238,13 +254,13 @@ const CommunityView = ({ communityId, onBack }) => {
             avatar={<Avatar src={post.author?.avatar} icon={<UserOutlined />} />}
             title={
               <Space>
-                <Text strong>{post.author?.name}</Text>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
+                <Text strong style={{ color: colors.text }}>{post.author?.name}</Text>
+                <Text style={{ fontSize: '12px', color: colors.textSecondary }}>
                   {new Date(post.createdAt).toLocaleDateString()}
                 </Text>
               </Space>
             }
-            description={<Paragraph>{post.content}</Paragraph>}
+            description={<Paragraph style={{ color: colors.text }}>{post.content}</Paragraph>}
           />
         </List.Item>
 
@@ -260,6 +276,11 @@ const CommunityView = ({ communityId, onBack }) => {
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     onPressEnter={handleAddComment}
+                    style={{ 
+                      background: colors.inputBackground, 
+                      color: colors.text,
+                      borderColor: colors.border 
+                    }}
                   />
                   <Button 
                     type="primary" 
@@ -391,7 +412,7 @@ const CommunityView = ({ communityId, onBack }) => {
       children: (
         <div>
           {user && (
-            <Card style={{ marginBottom: 16 }}>
+            <Card style={{ marginBottom: 16, background: colors.cardBackground, borderColor: colors.border }}>
               <Form form={postForm} onFinish={handleCreatePost}>
                 <Form.Item 
                   name="content" 
@@ -401,6 +422,11 @@ const CommunityView = ({ communityId, onBack }) => {
                     placeholder="What's on your mind?" 
                     rows={3}
                     autoSize={{ minRows: 3, maxRows: 6 }}
+                    style={{ 
+                      background: colors.inputBackground, 
+                      color: colors.text,
+                      borderColor: colors.border 
+                    }}
                   />
                 </Form.Item>
                 <Form.Item>
@@ -421,6 +447,7 @@ const CommunityView = ({ communityId, onBack }) => {
             dataSource={community.posts || []}
             renderItem={(post) => <PostItem post={post} />}
             locale={{ emptyText: 'No posts yet. Be the first to start a discussion!' }}
+            style={{ background: colors.background }}
           />
         </div>
       ),
@@ -433,6 +460,7 @@ const CommunityView = ({ communityId, onBack }) => {
           dataSource={community.members || []}
           renderItem={(member) => <MemberItem member={member} />}
           locale={{ emptyText: 'No members found' }}
+          style={{ background: colors.background }}
         />
       ),
     },
@@ -467,18 +495,18 @@ const CommunityView = ({ communityId, onBack }) => {
   ];
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div style={{ padding: '16px', background: colors.background, minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Button 
           icon={<ArrowLeftOutlined />} 
           onClick={onBack}
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 16, background: colors.cardBackground, color: colors.text, borderColor: colors.border }}
         >
           Back to Communities
         </Button>
         
-        <Card>
+        <Card style={{ background: colors.cardBackground, borderColor: colors.border }}>
           {community.coverImage && (
             <div 
               style={{ 
@@ -490,29 +518,32 @@ const CommunityView = ({ communityId, onBack }) => {
             />
           )}
           
-          <Title level={2}>{community.name}</Title>
-          <Paragraph>{community.description}</Paragraph>
+          <Title level={2} style={{ color: colors.text }}>{community.name}</Title>
+          <Paragraph style={{ color: colors.text }}>{community.description}</Paragraph>
           
           <Row gutter={16}>
             <Col>
               <Statistic 
-                title="Members" 
+                title={<span style={{ color: colors.textSecondary }}>Members</span>}
                 value={community.memberCount} 
-                prefix={<TeamOutlined />} 
+                prefix={<TeamOutlined />}
+                valueStyle={{ color: colors.text }}
               />
             </Col>
             <Col>
               <Statistic 
-                title="Posts" 
+                title={<span style={{ color: colors.textSecondary }}>Posts</span>}
                 value={community.posts?.length || 0} 
-                prefix={<MessageOutlined />} 
+                prefix={<MessageOutlined />}
+                valueStyle={{ color: colors.text }}
               />
             </Col>
             <Col>
               <Statistic 
-                title="Events" 
+                title={<span style={{ color: colors.textSecondary }}>Events</span>}
                 value={community.events?.length || 0} 
-                prefix={<CalendarOutlined />} 
+                prefix={<CalendarOutlined />}
+                valueStyle={{ color: colors.text }}
               />
             </Col>
           </Row>
@@ -521,7 +552,7 @@ const CommunityView = ({ communityId, onBack }) => {
             <Space>
               <Tag color="blue">{community.category}</Tag>
               {community.isPrivate && <Tag color="orange">Private</Tag>}
-              <Text type="secondary">
+              <Text style={{ color: colors.textSecondary }}>
                 Created {new Date(community.createdAt).toLocaleDateString()}
               </Text>
             </Space>
@@ -535,6 +566,7 @@ const CommunityView = ({ communityId, onBack }) => {
         onChange={setActiveTab}
         items={tabItems}
         size="large"
+        style={{ color: colors.text }}
       />
     </div>
   );

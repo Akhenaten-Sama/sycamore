@@ -456,17 +456,17 @@ const HomePage = () => {
       </div>
 
       {/* Get Involved Section */}
-      <div style={{ padding: '20px 16px' }}>
+      <div style={{ padding: '24px 16px' }}>
         <Title level={3} style={{ 
           color: isDarkMode ? '#fff' : '#000',
-          marginBottom: '16px',
+          marginBottom: '20px',
           fontSize: '18px',
           fontWeight: 700
         }}>
           Get Involved
         </Title>
         
-        <Row gutter={[12, 12]}>
+        <Row gutter={[16, 16]}>
           <Col xs={12}>
             <div
               onClick={() => navigate('/giving')}
@@ -497,8 +497,8 @@ const HomePage = () => {
                   src={GiveIcon} 
                   alt="Give"
                   style={{ 
-                    width: '24px', 
-                    height: '24px',
+                    width: '28px', 
+                    height: '28px',
                     filter: 'brightness(0) invert(1)'
                   }} 
                 />
@@ -515,7 +515,7 @@ const HomePage = () => {
 
           <Col xs={12}>
             <div
-              onClick={() => navigate('/request-forms')}
+              onClick={() => navigate('/requests')}
               style={{
                 width: '100%',
                 height: '64px',
@@ -543,8 +543,8 @@ const HomePage = () => {
                   src={RequestsIcon} 
                   alt="Request"
                   style={{ 
-                    width: '24px', 
-                    height: '24px',
+                    width: '28px', 
+                    height: '28px',
                     filter: 'brightness(0) invert(1)'
                   }} 
                 />
@@ -589,8 +589,8 @@ const HomePage = () => {
                   src={ConnectIcon} 
                   alt="Connect"
                   style={{ 
-                    width: '24px', 
-                    height: '24px',
+                    width: '28px', 
+                    height: '28px',
                     filter: 'brightness(0) invert(1)'
                   }} 
                 />
@@ -607,7 +607,7 @@ const HomePage = () => {
 
           <Col xs={12}>
             <div
-              onClick={() => navigate('/request-forms')}
+              onClick={() => navigate('/requests?category=Prayer')}
               style={{
                 width: '100%',
                 height: '64px',
@@ -635,8 +635,8 @@ const HomePage = () => {
                   src={PrayerRequestIcon} 
                   alt="Prayer Request"
                   style={{ 
-                    width: '24px', 
-                    height: '24px',
+                    width: '28px', 
+                    height: '28px',
                     filter: 'brightness(0) invert(1)'
                   }} 
                 />
@@ -699,7 +699,7 @@ const HomePage = () => {
 
           <Col xs={12}>
             <div
-              onClick={() => navigate('/request-forms')}
+              onClick={() => navigate('/testimonies')}
               style={{
                 width: '100%',
                 height: '64px',

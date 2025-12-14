@@ -12,8 +12,10 @@ import {
   HomeOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLocation } from 'react-router-dom';
 import ApiClient from '../services/apiClient';
-import colors from '../styles/colors';
+import { getColors } from '../styles/colors';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -21,12 +23,19 @@ const { Option } = Select;
 
 const RequestFormsPage = () => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
+  const location = useLocation();
+  const colors = getColors(isDarkMode);
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedForm, setSelectedForm] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+  
+  // Get category from URL query parameter
+  const searchParams = new URLSearchParams(location.search);
+  const category = searchParams.get('category');
 
   // Icon mapping for form categories
   const iconMap = {
@@ -52,12 +61,12 @@ const RequestFormsPage = () => {
 
   useEffect(() => {
     loadForms();
-  }, []);
+  }, [category]);
 
   const loadForms = async () => {
     try {
       setLoading(true);
-      const response = await ApiClient.getForms();
+      const response = await ApiClient.getForms(category);
       console.log('Forms response:', response);
       
       if (response?.success && response?.data) {
@@ -121,8 +130,8 @@ const RequestFormsPage = () => {
     <Card
       hoverable
       style={{
-        backgroundColor: colors.cardBackground,
-        border: `1px solid ${colors.mint}`,
+        backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+        border: `1px solid ${isDarkMode ? '#2a2a2a' : colors.mint}`,
         borderRadius: '12px',
         height: '100%'
       }}
@@ -139,7 +148,7 @@ const RequestFormsPage = () => {
         <Tag 
           style={{ 
             backgroundColor: formData.color,
-            color: colors.textWhite,
+            color: '#ffffff',
             border: 'none',
             borderRadius: '12px'
           }}
@@ -148,11 +157,11 @@ const RequestFormsPage = () => {
         </Tag>
       </div>
       
-      <Title level={4} style={{ color: colors.textPrimary, textAlign: 'center', marginBottom: '8px' }}>
+      <Title level={4} style={{ color: colors.text, textAlign: 'center', marginBottom: '8px' }}>
         {formData.title}
       </Title>
       
-      <Paragraph style={{ color: colors.textSecondary, textAlign: 'center', marginBottom: '20px' }}>
+      <Paragraph style={{ color: colors.text, opacity: 0.7, textAlign: 'center', marginBottom: '20px' }}>
         {formData.description}
       </Paragraph>
       
@@ -260,12 +269,19 @@ const RequestFormsPage = () => {
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <Card style={{ textAlign: 'center', maxWidth: '400px' }}>
-          <Title level={3} style={{ color: colors.textPrimary }}>
+        <Card 
+          style={{ 
+            textAlign: 'center', 
+            maxWidth: '400px',
+            backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+            border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
+          }}
+        >
+          <Title level={3} style={{ color: colors.text }}>
             <FormOutlined style={{ marginRight: '8px', color: colors.primary }} />
             Request Forms
           </Title>
-          <Paragraph style={{ color: colors.textSecondary }}>
+          <Paragraph style={{ color: colors.text, opacity: 0.7 }}>
             Please sign in to access and submit request forms.
           </Paragraph>
           <Button type="primary" onClick={() => window.location.href = '/'}>
@@ -277,21 +293,23 @@ const RequestFormsPage = () => {
   }
 
   return (
-    <div style={{ background: colors.background, minHeight: '100vh', padding: '16px' }}>
+    <div style={{ background: colors.background, minHeight: '100vh', padding: '16px', paddingBottom: '80px' }}>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <Title level={2} style={{ color: colors.textPrimary }}>
+        <Title level={2} style={{ color: colors.text }}>
           <FormOutlined style={{ marginRight: '8px', color: colors.primary }} />
-          Request Forms
+          {category === 'Prayer' ? 'Prayer Requests' : 'Request Forms'}
         </Title>
-        <Paragraph style={{ color: colors.textSecondary, maxWidth: '600px', margin: '0 auto' }}>
-          Submit requests for prayer, events, counseling, and more. Our team will review and respond to your request promptly.
+        <Paragraph style={{ color: colors.text, opacity: 0.7, maxWidth: '600px', margin: '0 auto' }}>
+          {category === 'Prayer' 
+            ? 'Submit your prayer requests and our team will pray for you.'
+            : 'Submit requests for prayer, events, counseling, and more. Our team will review and respond to your request promptly.'}
         </Paragraph>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: colors.textPrimary }}>Loading request forms...</div>
+          <div style={{ marginTop: 16, color: colors.text }}>Loading request forms...</div>
         </div>
       ) : forms.length > 0 ? (
         <Row gutter={[16, 16]}>
@@ -303,8 +321,9 @@ const RequestFormsPage = () => {
         </Row>
       ) : (
         <Empty 
-          description="No request forms available" 
-          style={{ color: colors.textSecondary }}
+          description={<span style={{ color: colors.text, opacity: 0.7 }}>
+            {category === 'Prayer' ? 'No prayer request forms available' : 'No request forms available'}
+          </span>}
         />
       )}
 
@@ -328,7 +347,7 @@ const RequestFormsPage = () => {
             onFinish={handleSubmit}
           >
             <div style={{ marginBottom: '20px' }}>
-              <Paragraph style={{ color: colors.textSecondary }}>
+              <Paragraph style={{ color: colors.text, opacity: 0.7 }}>
                 {selectedForm.description}
               </Paragraph>
             </div>

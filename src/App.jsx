@@ -19,6 +19,7 @@ import CommunityDetailsPage from './pages/CommunityDetailsPage';
 import SermonNotesPage from './pages/SermonNotesPage';
 import BiblePage from './pages/BiblePage';
 import RequestFormsPage from './pages/RequestFormsPage';
+import TestimoniesPage from './pages/TestimoniesPage';
 import WatchLivePage from './pages/WatchLivePage';
 import MorePage from './pages/MorePage';
 import JuniorChurchCheckInPage from './pages/JuniorChurchCheckInPage';
@@ -54,6 +55,7 @@ const AppContent = () => {
                   <Route path="/sermon-notes" element={<SermonNotesPage />} />
                   <Route path="/bible" element={<BiblePage />} />
                   <Route path="/requests" element={<RequestFormsPage />} />
+                  <Route path="/testimonies" element={<TestimoniesPage />} />
                   <Route path="/watch-live" element={<WatchLivePage />} />
                   <Route path="/junior-church-checkin" element={<JuniorChurchCheckInPage />} />
                   <Route path="/more" element={<MorePage />} />

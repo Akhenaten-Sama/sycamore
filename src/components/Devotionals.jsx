@@ -66,7 +66,10 @@ const Devotionals = ({ user }) => {
   const loadDevotionals = async () => {
     try {
       setLoading(true);
-      const response = await ApiClient.getDevotionals();
+      const userId = user?.memberId || user?.id;
+      const response = userId 
+        ? await ApiClient.getDevotionals(userId) // Pass userId to get read status
+        : await ApiClient.getDevotionals();
       // Check if response has data property (API response) or is direct array
       const devotionalsData = response?.data || response || mockDevotionals;
       setDevotionals(Array.isArray(devotionalsData) ? devotionalsData : mockDevotionals);
