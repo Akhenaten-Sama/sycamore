@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL =  'http://localhost:3001/api';
+const API_BASE_URL =  'https://admin.sycamore.church/api';
 
 class ApiClient {
   constructor() {
