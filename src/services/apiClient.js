@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL =  'https://admin.sycamore.church/api';
+const API_BASE_URL =  'http://localhost:3001/api';
 
 class ApiClient {
   constructor() {
@@ -381,8 +381,12 @@ class ApiClient {
   }
 
   // Devotionals endpoints
-  async getDevotionals() {
-    return this.request('/mobile/devotionals');
+  async getDevotionals(userId = null, limit = 7) {
+    const params = new URLSearchParams();
+    if (userId) params.append('userId', userId);
+    if (limit) params.append('limit', limit.toString());
+    const queryString = params.toString();
+    return this.request(`/mobile/devotionals${queryString ? '?' + queryString : ''}`);
   }
 
   async getDevotionalStats(userId) {

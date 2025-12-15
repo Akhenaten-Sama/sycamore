@@ -55,6 +55,9 @@ const Devotionals = ({ user }) => {
   const [viewModal, setViewModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [monthlyProgress, setMonthlyProgress] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(5);
+  const [todaysDevotional, setTodaysDevotional] = useState(null);
 
   useEffect(() => {
     loadDevotionals();
@@ -63,13 +66,25 @@ const Devotionals = ({ user }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Find today's devotional
+    if (devotionals && devotionals.length > 0) {
+      const today = new Date().toDateString();
+      const todaysDev = devotionals.find(d => 
+        new Date(d.date).toDateString() === today
+      );
+      setTodaysDevotional(todaysDev || devotionals[0]);
+    }
+  }, [devotionals]);
+
   const loadDevotionals = async () => {
     try {
       setLoading(true);
       const userId = user?.memberId || user?.id;
+      // Load 30 days of devotionals for pagination
       const response = userId 
-        ? await ApiClient.getDevotionals(userId) // Pass userId to get read status
-        : await ApiClient.getDevotionals();
+        ? await ApiClient.getDevotionals(userId, 30) // Pass userId and limit
+        : await ApiClient.getDevotionals(null, 30);
       // Check if response has data property (API response) or is direct array
       const devotionalsData = response?.data || response || mockDevotionals;
       setDevotionals(Array.isArray(devotionalsData) ? devotionalsData : mockDevotionals);
@@ -385,6 +400,94 @@ const Devotionals = ({ user }) => {
 
       {user && <StatsSection />}
 
+      {/* Today's Devotional - Featured */}
+      {todaysDevotional && (
+        <Card
+          style={{
+            marginBottom: 24,
+            borderRadius: 12,
+            border: `2px solid ${isDarkMode ? '#2d7a7a' : '#2d7a7a'}`,
+            boxShadow: '0 4px 12px rgba(45, 122, 122, 0.2)',
+            backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff'
+          }}
+        >
+          <div style={{ marginBottom: 16 }}>
+            <Badge.Ribbon text="Today's Devotional" color="#2d7a7a">
+              <Title level={3} style={{ color: colors.text, marginTop: 8 }}>
+                <BookOutlined /> {todaysDevotional.title}
+              </Title>
+            </Badge.Ribbon>
+          </div>
+          <Space wrap style={{ marginBottom: 12 }}>
+            <Tag color="#2d7a7a">
+              <CalendarOutlined /> {new Date(todaysDevotional.date).toLocaleDateString()}
+            </Tag>
+            <Tag color="#52c41a">
+              <BookOutlined /> {todaysDevotional.verse?.split(' - ')[0] || 'Scripture'}
+            </Tag>
+            <Tag color="#faad14">
+              <ClockCircleOutlined /> {todaysDevotional.readTime} min read
+            </Tag>
+          </Space>
+          <Paragraph 
+            ellipsis={{ rows: 4, expandable: true, symbol: 'Read more' }}
+            style={{ 
+              fontSize: 16, 
+              lineHeight: 1.8,
+              color: colors.text,
+              marginBottom: 16
+            }}
+          >
+            {todaysDevotional.content}
+          </Paragraph>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button 
+              type="primary"
+              size="large"
+              icon={<BookOutlined />}
+              onClick={() => openDevotional(todaysDevotional)}
+              style={{
+                backgroundColor: '#2d7a7a',
+                borderColor: '#2d7a7a'
+              }}
+            >
+              Read Full Devotional
+            </Button>
+            {!todaysDevotional.isRead && user && (
+              <Button
+                size="large"
+                icon={<CheckOutlined />}
+                onClick={() => markAsRead(todaysDevotional.id)}
+              >
+                Mark as Read
+              </Button>
+            )}
+            <Button 
+              type="text"
+              size="large"
+              icon={todaysDevotional.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+              onClick={() => handleLike(todaysDevotional.id)}
+              style={{ color: isDarkMode ? '#888' : '#666' }}
+            >
+              {todaysDevotional.likes || 0}
+            </Button>
+            <Button 
+              type="text"
+              size="large"
+              icon={<MessageOutlined />}
+              onClick={() => openDevotional(todaysDevotional)}
+              style={{ color: isDarkMode ? '#888' : '#666' }}
+            >
+              {todaysDevotional.comments || 0}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      <Divider style={{ borderColor: isDarkMode ? '#2a2a2a' : '#e0e0e0' }}>
+        <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>Previous Devotionals</Text>
+      </Divider>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
           <Spin size="large" />
@@ -392,9 +495,46 @@ const Devotionals = ({ user }) => {
       ) : (
         <div>
           {Array.isArray(devotionals) && devotionals.length > 0 ? (
-            devotionals.map(devotional => (
-              <DevotionalCard key={devotional.id || devotional._id} devotional={devotional} />
-            ))
+            <>
+              {/* Show previous devotionals (excluding today's) */}
+              {devotionals
+                .filter(d => {
+                  // Exclude today's devotional from the list
+                  const today = new Date().toDateString();
+                  return new Date(d.date).toDateString() !== today;
+                })
+                .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                .map(devotional => (
+                  <DevotionalCard key={devotional.id || devotional._id} devotional={devotional} />
+                ))
+              }
+              
+              {/* Pagination */}
+              {devotionals.filter(d => {
+                const today = new Date().toDateString();
+                return new Date(d.date).toDateString() !== today;
+              }).length > pageSize && (
+                <div style={{ textAlign: 'center', marginTop: 24 }}>
+                  <Button.Group>
+                    <Button 
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button disabled>
+                      Page {currentPage} of {Math.ceil((devotionals.length - 1) / pageSize)}
+                    </Button>
+                    <Button 
+                      onClick={() => setCurrentPage(p => Math.min(Math.ceil((devotionals.length - 1) / pageSize), p + 1))}
+                      disabled={currentPage >= Math.ceil((devotionals.length - 1) / pageSize)}
+                    >
+                      Next
+                    </Button>
+                  </Button.Group>
+                </div>
+              )}
+            </>
           ) : (
             <Empty 
               description="No devotionals available"
