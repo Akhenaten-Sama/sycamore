@@ -153,15 +153,15 @@ const Communities = ({ user }) => {
     }
   };
 
-  const getCommunityGradient = (type) => {
-    const gradients = {
-      'life-group': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      'ministry': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      'team': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      'study': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-      'custom': 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+  const getCommunityBackground = (type) => {
+    const backgrounds = {
+      'life-group': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&q=80',
+      'ministry': 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=800&q=80',
+      'team': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
+      'study': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80',
+      'custom': 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80'
     };
-    return gradients[type] || 'linear-gradient(135deg, #2d7a7a 0%, #1a4d4d 100%)';
+    return backgrounds[type] || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&q=80';
   };
 
   const CommunityCard = ({ community, showJoinButton = true }) => {
@@ -198,45 +198,35 @@ const Communities = ({ user }) => {
         <div 
           style={{ 
             height: 180,
-            background: community.image 
-              ? `url(${community.image}) center/cover`
-              : getCommunityGradient(community.type),
+            backgroundImage: `url(${community.image || getCommunityBackground(community.type)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             position: 'relative',
             borderRadius: '16px 16px 0 0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             overflow: 'hidden'
           }}
         >
-          {!community.image && (
-            <>
-              {/* Background Icon Pattern */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%) rotate(-15deg)',
-                opacity: 0.15
-              }}>
-                <TeamOutlined 
-                  style={{ 
-                    fontSize: '120px', 
-                    color: '#ffffff'
-                  }} 
-                />
-              </div>
-              {/* Foreground Icon */}
+          {/* Dark overlay for better text readability */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {!community.image && (
               <TeamOutlined 
                 style={{ 
                   fontSize: '48px', 
-                  color: 'rgba(255, 255, 255, 0.95)',
-                  position: 'relative',
-                  zIndex: 1
+                  color: 'rgba(255, 255, 255, 0.8)'
                 }} 
               />
-            </>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Card Content */}

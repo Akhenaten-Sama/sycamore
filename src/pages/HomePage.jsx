@@ -172,26 +172,26 @@ const HomePage = () => {
     }}>
       {/* Hero Section */}
       <div style={{
-        background: isDarkMode 
-          ? 'linear-gradient(135deg, #1a4d4d 0%, #0d2626 100%)'
-          : 'linear-gradient(135deg, #2d7a7a 0%, #1a4d4d 100%)',
+        backgroundImage: isDarkMode 
+          ? 'url(https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=1200&q=80)'
+          : 'url(https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=1200&q=80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         padding: '40px 16px 24px',
         borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Background Pattern */}
+        {/* Dark overlay for better text readability */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: 'url(/images/sycamore-logo.svg)',
-          backgroundSize: '300px',
-          backgroundPosition: 'right -50px top -50px',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.1,
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, rgba(26, 77, 77, 0.95) 0%, rgba(13, 38, 38, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(45, 122, 122, 0.95) 0%, rgba(26, 77, 77, 0.95) 100%)',
           pointerEvents: 'none'
         }} />
       
