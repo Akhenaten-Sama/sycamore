@@ -153,6 +153,17 @@ const Communities = ({ user }) => {
     }
   };
 
+  const getCommunityGradient = (type) => {
+    const gradients = {
+      'life-group': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      'ministry': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      'team': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      'study': 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+      'custom': 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+    };
+    return gradients[type] || 'linear-gradient(135deg, #2d7a7a 0%, #1a4d4d 100%)';
+  };
+
   const CommunityCard = ({ community, showJoinButton = true }) => {
     // Use the isJoined flag from the API response directly
     const isJoined = community.isJoined === true;
@@ -189,21 +200,42 @@ const Communities = ({ user }) => {
             height: 180,
             background: community.image 
               ? `url(${community.image}) center/cover`
-              : `linear-gradient(135deg, ${community.color || '#2d5a5a'} 0%, ${community.color || '#1a3a3a'} 100%)`,
+              : getCommunityGradient(community.type),
             position: 'relative',
             borderRadius: '16px 16px 0 0',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            overflow: 'hidden'
           }}
         >
           {!community.image && (
-            <TeamOutlined 
-              style={{ 
-                fontSize: '48px', 
-                color: 'rgba(255, 255, 255, 0.3)' 
-              }} 
-            />
+            <>
+              {/* Background Icon Pattern */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%) rotate(-15deg)',
+                opacity: 0.15
+              }}>
+                <TeamOutlined 
+                  style={{ 
+                    fontSize: '120px', 
+                    color: '#ffffff'
+                  }} 
+                />
+              </div>
+              {/* Foreground Icon */}
+              <TeamOutlined 
+                style={{ 
+                  fontSize: '48px', 
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  position: 'relative',
+                  zIndex: 1
+                }} 
+              />
+            </>
           )}
         </div>
 

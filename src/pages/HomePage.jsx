@@ -172,18 +172,44 @@ const HomePage = () => {
     }}>
       {/* Hero Section */}
       <div style={{
-        background: isDarkMode ? '#1e1e1e' : '#ffffff',
+        background: isDarkMode 
+          ? 'linear-gradient(135deg, #1a4d4d 0%, #0d2626 100%)'
+          : 'linear-gradient(135deg, #2d7a7a 0%, #1a4d4d 100%)',
         padding: '40px 16px 24px',
-     
-        borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`
+        borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e8e8e8'}`,
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Background Pattern */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'url(/images/sycamore-logo.svg)',
+          backgroundSize: '300px',
+          backgroundPosition: 'right -50px top -50px',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.1,
+          pointerEvents: 'none'
+        }} />
       
-        <div style={{ fontSize: '25px', marginBottom: '12px' }}>Welcome to Sycamore Church 👋</div>
+        <div style={{ 
+          fontSize: '25px', 
+          marginBottom: '12px',
+          color: '#ffffff',
+          fontWeight: 700,
+          position: 'relative',
+          zIndex: 1
+        }}>Welcome to Sycamore Church 👋</div>
         <Text style={{ 
           fontSize: '13px',
-          color: isDarkMode ? '#888' : '#666',
+          color: 'rgba(255, 255, 255, 0.9)',
           fontWeight: 300,
-          letterSpacing: '0.3px'
+          letterSpacing: '0.3px',
+          position: 'relative',
+          zIndex: 1
         }}>
           It's my church as it's your church
         </Text>
