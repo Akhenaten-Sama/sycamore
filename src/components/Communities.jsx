@@ -67,34 +67,16 @@ const Communities = ({ user }) => {
   const loadCommunities = async () => {
     try {
       setLoading(true);
-      const response = await ApiClient.getCommunities();
+      // Use the type=all parameter to get all communities with proper isJoined flags
+      const response = await ApiClient.getCommunities('all');
       console.log('All communities API response:', response);
       // Check if response has data property (API response) or is direct array
       const communitiesData = response?.data || response || [];
       setCommunities(Array.isArray(communitiesData) ? communitiesData : []);
-      
-      // If user is logged in, also get available communities from member endpoint
-      if (user) {
-        try {
-          const memberResponse = await ApiClient.getMemberCommunities(user.memberId || user.id);
-          console.log('Member communities response:', memberResponse);
-          if (memberResponse?.availableCommunities) {
-            // Combine member communities with available communities for complete list
-            const allCommunities = [
-              ...(memberResponse.memberCommunities || []),
-              ...(memberResponse.availableCommunities || [])
-            ];
-            console.log('Combined communities:', allCommunities);
-            setCommunities(allCommunities);
-          }
-        } catch (error) {
-          console.error('Failed to load member-specific communities:', error);
-        }
-      }
     } catch (error) {
       console.error('Failed to load communities:', error);
-      // Fallback to mock data
-      setCommunities(mockCommunities);
+      // Fallback to empty array
+      setCommunities([]);
     } finally {
       setLoading(false);
     }
@@ -172,8 +154,8 @@ const Communities = ({ user }) => {
   };
 
   const CommunityCard = ({ community, showJoinButton = true }) => {
-    // Check if community is joined either from myCommunities array or from community.isJoined property
-    const isJoined = community.isJoined || myCommunities.some(c => c.id === community.id || c._id === community._id);
+    // Use the isJoined flag from the API response directly
+    const isJoined = community.isJoined === true;
     const isInvited = community.isInvited;
     const hasJoinRequest = community.hasJoinRequest;
     const canJoin = community.canJoin !== false; // Default to true if not specified
