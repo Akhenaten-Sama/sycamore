@@ -39,7 +39,13 @@ const AuthModal = ({ visible, onClose }) => {
     setLoading(true);
     setLoginError('');
     try {
-      const result = await login(values);
+      // Sanitize inputs by trimming whitespace and removing spaces
+      const sanitizedValues = {
+        email: values.email?.trim().replace(/\s/g, '') || '',
+        password: values.password?.trim().replace(/\s/g, '') || ''
+      };
+      
+      const result = await login(sanitizedValues);
       if (result.success) {
         onClose();
         loginForm.resetFields();
@@ -110,7 +116,9 @@ const AuthModal = ({ visible, onClose }) => {
         rules={[
           { required: true, message: 'Please enter your email' },
           { type: 'email', message: 'Please enter a valid email' },
+          { whitespace: true, message: 'Email cannot contain only spaces' },
         ]}
+        normalize={(value) => value?.replace(/\s/g, '')}
       >
         <Input
           prefix={<MailOutlined />}
@@ -121,7 +129,11 @@ const AuthModal = ({ visible, onClose }) => {
       <Form.Item
         name="password"
         label="Password"
-        rules={[{ required: true, message: 'Please enter your password' }]}
+        rules={[
+          { required: true, message: 'Please enter your password' },
+          { whitespace: true, message: 'Password cannot contain only spaces' },
+        ]}
+        normalize={(value) => value?.replace(/\s/g, '')}
       >
         <Input.Password
           prefix={<LockOutlined />}

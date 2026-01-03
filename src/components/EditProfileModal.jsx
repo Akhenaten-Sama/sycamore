@@ -1,0 +1,197 @@
+import React, { useState } from 'react';
+import {
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Button,
+  message,
+} from 'antd';
+import dayjs from 'dayjs';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { getColors } from '../styles/colors';
+import apiClient from '../services/apiClient';
+
+const EditProfileModal = ({ visible, onClose, user }) => {
+  const [loading, setLoading] = useState(false);
+  const { updateProfile } = useAuth();
+  const { isDarkMode } = useTheme();
+  const colors = getColors(isDarkMode);
+  const [form] = Form.useForm();
+
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const profileData = {
+        userId: user?.memberId || user?.id || user?._id,
+        phone: values.phone,
+        dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD'),
+        address: values.address,
+      };
+
+      const cleanData = Object.fromEntries(
+        Object.entries(profileData).filter(([_, value]) => value !== undefined)
+      );
+
+      const response = await apiClient.updateProfile(cleanData);
+      
+      if (response && response.success !== false) {
+        await updateProfile(cleanData);
+        message.success(response.message || 'Profile updated successfully!');
+        onClose();
+      } else {
+        const errorMessage = response?.message || 'Failed to update profile. Please try again.';
+        message.error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      const errorMessage = error.message || 'Failed to update profile. Please try again.';
+      message.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const modalStyles = {
+    content: {
+      background: isDarkMode ? '#1a1a1a' : '#ffffff',
+      padding: '24px',
+    },
+    header: {
+      background: isDarkMode ? '#1a1a1a' : '#ffffff',
+      borderBottom: 'none',
+      padding: '24px 24px 16px',
+    },
+  };
+
+  return (
+    <Modal
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      width={600}
+      centered
+      destroyOnClose
+      styles={modalStyles}
+      style={{ top: 20 }}
+    >
+      <div style={{ background: isDarkMode ? '#1a1a1a' : '#ffffff' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: colors.text, marginBottom: '8px' }}>
+            Edit Profile
+          </h2>
+          <p style={{ fontSize: '14px', color: isDarkMode ? '#888' : '#666', margin: 0 }}>
+            Update your personal information
+          </p>
+        </div>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={{
+            phone: user?.phone || '',
+            dateOfBirth: user?.dateOfBirth ? dayjs(user.dateOfBirth) : undefined,
+            address: user?.address || '',
+          }}
+        >
+          <Form.Item 
+            name="phone" 
+            label={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Phone number</span>} 
+            rules={[{ required: true, message: 'Phone number is required' }]} 
+            style={{ marginBottom: '16px' }}
+          >
+            <Input 
+              placeholder="Enter phone number" 
+              style={{ 
+                background: isDarkMode ? '#121212' : '#ffffff', 
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`, 
+                borderRadius: '8px', 
+                padding: '12px 16px', 
+                color: colors.text, 
+                height: '48px' 
+              }} 
+            />
+          </Form.Item>
+          
+          <Form.Item 
+            name="dateOfBirth" 
+            label={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Date of birth</span>} 
+            rules={[{ required: true, message: 'Date of birth is required' }]} 
+            style={{ marginBottom: '16px' }}
+          >
+            <DatePicker 
+              placeholder="dd/mm/yyyy" 
+              format="DD/MM/YYYY" 
+              style={{ 
+                width: '100%', 
+                background: isDarkMode ? '#121212' : '#ffffff', 
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`, 
+                borderRadius: '8px', 
+                padding: '12px 16px', 
+                height: '48px' 
+              }} 
+              disabledDate={(current) => current && current > dayjs().endOf('day')} 
+            />
+          </Form.Item>
+          
+          <Form.Item 
+            name="address" 
+            label={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Address</span>} 
+            rules={[{ required: true, message: 'Address is required' }]} 
+            style={{ marginBottom: '24px' }}
+          >
+            <Input.TextArea 
+              placeholder="Enter your address" 
+              rows={3}
+              style={{ 
+                background: isDarkMode ? '#121212' : '#ffffff', 
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`, 
+                borderRadius: '8px', 
+                padding: '12px 16px', 
+                color: colors.text 
+              }} 
+            />
+          </Form.Item>
+          
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <Button 
+              onClick={onClose} 
+              style={{ 
+                height: '48px', 
+                borderRadius: '8px', 
+                border: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`, 
+                background: 'transparent', 
+                color: colors.text, 
+                fontSize: '16px', 
+                fontWeight: '500',
+                minWidth: '100px'
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={loading} 
+              style={{ 
+                height: '48px', 
+                borderRadius: '8px', 
+                background: '#2d7a7a', 
+                borderColor: '#2d7a7a', 
+                color: '#ffffff', 
+                fontSize: '16px', 
+                fontWeight: '500',
+                minWidth: '100px'
+              }}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </Form>
+      </div>
+    </Modal>
+  );
+};
+
+export default EditProfileModal;

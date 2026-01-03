@@ -55,6 +55,7 @@ const MemberDashboard = ({ user }) => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [memberJourney, setMemberJourney] = useState([]);
+  const [userTeams, setUserTeams] = useState([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -89,24 +90,50 @@ const MemberDashboard = ({ user }) => {
       const memberIdToUse = user.memberId || user.id;
       
       // Load member statistics and devotional stats in parallel
-      const [stats, devotionalStats, activity, tasks, journey] = await Promise.all([
+      const [stats, devotionalStats, activity, tasks, journey, teams] = await Promise.all([
         ApiClient.getMemberStats(memberIdToUse),
         ApiClient.getDevotionalStats(memberIdToUse),
         ApiClient.getMemberActivity(memberIdToUse),
         ApiClient.getMemberTasks(memberIdToUse),
-        ApiClient.getMemberJourney(memberIdToUse)
+        ApiClient.getMemberJourney(memberIdToUse),
+        ApiClient.getTeams()
       ]);
 
+      console.log('📊 Stats response:', stats);
+      console.log('📖 Devotional stats response:', devotionalStats);
+
+      // Extract stats from response structure
+      const statsData = stats?.data || stats || {};
+      const devotionalData = devotionalStats?.data || devotionalStats || {};
+      
+      console.log('📊 Extracted stats data:', statsData);
+      console.log('📖 Extracted devotional data:', devotionalData);
+      
       // Combine stats with devotional data
       const combinedStats = {
-        ...(stats || memberStats),
-        devotionalStreak: devotionalStats?.currentStreak || 0
+        attendanceStreak: statsData.attendanceStreak || 0,
+        devotionalStreak: statsData.devotionalStreak || devotionalData.currentStreak || devotionalData.devotionalStreak || 0,
+        totalAttendance: statsData.totalAttendance || 0,
+        totalDonations: statsData.totalDonations || 0,
+        tasksCompleted: statsData.tasksCompleted || 0,
+        communitiesJoined: statsData.communitiesJoined || 0,
       };
       
+      console.log('✅ Combined stats:', combinedStats);
       setMemberStats(combinedStats);
       setRecentActivity(activity || []);
-      setUpcomingTasks(tasks || []);
+      
+      // Extract tasks from the response structure
+      console.log('📋 Tasks response:', tasks);
+      const tasksData = tasks?.data?.tasks?.pending || tasks?.tasks?.pending || tasks?.pending || tasks || [];
+      console.log('📋 Extracted pending tasks:', tasksData);
+      setUpcomingTasks(tasksData);
+      
       setMemberJourney(journey || []);
+      // Extract teams data from response if it has success/data structure
+      const teamsData = teams?.data || teams || [];
+      console.log('📋 Teams loaded:', teamsData);
+      setUserTeams(teamsData);
     } catch (error) {
       console.error('Failed to load member data:', error);
     } finally {
@@ -135,12 +162,13 @@ const MemberDashboard = ({ user }) => {
               {user?.firstName} {user?.lastName}
             </Title>
             <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
-              Member since {new Date(user?.memberSince || user?.createdAt).getFullYear()}
+              Member since {user?.memberSince ? new Date(user.memberSince).getFullYear() : user?.createdAt ? new Date(user.createdAt).getFullYear() : 'N/A'}
             </Text>
-            <div style={{ marginTop: 16 }}>
-              <Tag color="blue">{user?.membershipType || 'Regular Member'}</Tag>
-              {user?.team && <Tag color="green">Team: {user.team}</Tag>}
-            </div>
+            {user?.team && (
+              <div style={{ marginTop: 16 }}>
+                <Tag color="green">Team: {user.team}</Tag>
+              </div>
+            )}
           </div>
         </Col>
         <Col xs={24} sm={24} md={16} lg={18} xl={18}>
@@ -218,7 +246,7 @@ const MemberDashboard = ({ user }) => {
           <Statistic
             title={<span style={{ color: isDarkMode ? '#888' : '#666' }}>Total Giving</span>}
             value={memberStats.totalDonations}
-            prefix="$"
+            prefix="₦"
             precision={2}
             valueStyle={{ fontSize: 18, color: '#fa8c16' }}
           />
@@ -286,30 +314,27 @@ const MemberDashboard = ({ user }) => {
           renderItem={task => (
             <List.Item
               style={{
+                backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
                 borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
               }}
-              actions={[
-                <Button 
-                  type="primary" 
-                  size="small"
-                  onClick={() => markTaskComplete(task.id)}
-                  style={{
-                    background: '#4a9d9d',
-                    borderColor: '#4a9d9d'
-                  }}
-                >
-                  Complete
-                </Button>
-              ]}
             >
               <List.Item.Meta
                 avatar={<Avatar icon={<BookOutlined />} style={{ backgroundColor: '#5a4a7a' }} />}
-                title={<span style={{ color: colors.text }}>{task.title}</span>}
+                title={<span style={{ color: colors.text, fontWeight: 500 }}>{task.title}</span>}
                 description={
                   <div>
-                    <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>{task.description}</Text>
-                    <br />
-                    <Tag color="orange">Due: {new Date(task.dueDate).toLocaleDateString()}</Tag>
+                    <Text style={{ color: isDarkMode ? '#bbb' : '#555', display: 'block', marginBottom: 8 }}>
+                      {task.description}
+                    </Text>
+                    <Space size="small" wrap>
+                      <Tag color="orange">
+                        Due: {task.expectedDeliveryDate ? new Date(task.expectedDeliveryDate).toLocaleDateString() : 'No due date'}
+                      </Tag>
+                      <Tag color={task.priority === 'high' ? 'red' : task.priority === 'medium' ? 'orange' : 'blue'}>
+                        {task.priority || 'medium'} priority
+                      </Tag>
+                      <Tag color="purple">{task.status || 'open'}</Tag>
+                    </Space>
                   </div>
                 }
               />
@@ -319,6 +344,73 @@ const MemberDashboard = ({ user }) => {
       ) : (
         <Empty 
           description={<span style={{ color: isDarkMode ? '#888' : '#666' }}>No pending tasks</span>}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      )}
+    </Card>
+  );
+
+  const TeamsSection = () => (
+    <Card 
+      title={<span style={{ color: colors.text }}><TeamOutlined /> My Teams</span>}
+      style={{
+        background: isDarkMode ? '#1a1a1a' : '#ffffff',
+        border: isDarkMode ? 'none' : '1px solid #e0e0e0'
+      }}
+      headStyle={{
+        background: isDarkMode ? '#1a1a1a' : '#ffffff',
+        borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
+      }}
+    >
+      {userTeams.length > 0 ? (
+        <List
+          dataSource={userTeams}
+          renderItem={team => (
+            <List.Item
+              style={{
+                backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
+                borderBottom: `1px solid ${isDarkMode ? '#2a2a2a' : '#e0e0e0'}`
+              }}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar 
+                    style={{ 
+                      backgroundColor: team.isLeader ? '#fa8c16' : '#1890ff',
+                      verticalAlign: 'middle' 
+                    }} 
+                    size="large"
+                  >
+                    <TeamOutlined />
+                  </Avatar>
+                }
+                title={
+                  <div>
+                    <span style={{ color: colors.text, fontWeight: 600 }}>{team.name}</span>
+                    {team.isLeader && (
+                      <Tag color="orange" style={{ marginLeft: 8 }}>Leader</Tag>
+                    )}
+                  </div>
+                }
+                description={
+                  <div>
+                    <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
+                      {team.description || 'No description'}
+                    </Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 12, color: isDarkMode ? '#888' : '#666' }}>
+                      {team.memberCount} member{team.memberCount !== 1 ? 's' : ''}
+                      {team.leader && ` • Led by ${team.leader.name}`}
+                    </Text>
+                  </div>
+                }
+              />
+            </List.Item>
+          )}
+        />
+      ) : (
+        <Empty 
+          description={<span style={{ color: isDarkMode ? '#888' : '#666' }}>You haven't been added to any teams yet</span>}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       )}
@@ -376,7 +468,12 @@ const MemberDashboard = ({ user }) => {
       key: 'overview',
       label: 'Overview',
       children: (
-        <div style={{ background: colors.background, minHeight: '100vh', paddingBottom: '24px' }}>
+        <div style={{ 
+          background: colors.background, 
+          minHeight: '100vh', 
+          padding: screenSize === 'mobile' ? '16px' : '24px',
+          paddingBottom: '24px' 
+        }}>
           <ProfileSection />
           <Divider style={{ borderColor: isDarkMode ? '#2a2a2a' : '#e0e0e0' }} />
           <StatsSection />
@@ -401,7 +498,12 @@ const MemberDashboard = ({ user }) => {
       key: 'journey',
       label: 'Sycamore Journey',
       children: (
-        <div style={{ background: colors.background, minHeight: '100vh', paddingBottom: '24px' }}>
+        <div style={{ 
+          background: colors.background, 
+          minHeight: '100vh', 
+          padding: screenSize === 'mobile' ? '16px' : '24px',
+          paddingBottom: '24px' 
+        }}>
           <JourneySection />
         </div>
       ),
@@ -410,8 +512,27 @@ const MemberDashboard = ({ user }) => {
       key: 'tasks',
       label: 'My Tasks',
       children: (
-        <div style={{ background: colors.background, minHeight: '100vh', paddingBottom: '24px' }}>
+        <div style={{ 
+          background: colors.background, 
+          minHeight: '100vh', 
+          padding: screenSize === 'mobile' ? '16px' : '24px',
+          paddingBottom: '24px' 
+        }}>
           <TasksSection />
+        </div>
+      ),
+    },
+    {
+      key: 'teams',
+      label: 'My Teams',
+      children: (
+        <div style={{ 
+          background: colors.background, 
+          minHeight: '100vh', 
+          padding: screenSize === 'mobile' ? '16px' : '24px',
+          paddingBottom: '24px' 
+        }}>
+          <TeamsSection />
         </div>
       ),
     },
@@ -419,7 +540,12 @@ const MemberDashboard = ({ user }) => {
       key: 'activity',
       label: 'Activity',
       children: (
-        <div style={{ background: colors.background, minHeight: '100vh', paddingBottom: '24px' }}>
+        <div style={{ 
+          background: colors.background, 
+          minHeight: '100vh', 
+          padding: screenSize === 'mobile' ? '16px' : '24px',
+          paddingBottom: '24px' 
+        }}>
           <ActivitySection />
         </div>
       ),
@@ -442,21 +568,22 @@ const MemberDashboard = ({ user }) => {
 
   return (
     <div style={{ 
-      padding: screenSize === 'mobile' ? '0 16px' : '0 24px', 
+      padding: screenSize === 'mobile' ? '0' : '0', 
       maxWidth: screenSize === 'desktop' ? '1200px' : '100%',
       margin: '0 auto',
       background: colors.background,
-      minHeight: '100vh'
+      minHeight: '100vh',
+      paddingBottom: '80px'
     }}>
       <Tabs 
         items={tabItems}
         centered={screenSize === 'mobile'}
         size="large"
-        style={{ marginTop: 16 }}
-        tabPosition={screenSize === 'desktop' ? 'left' : 'top'}
-        tabBarStyle={{
-          color: colors.text
+        style={{ 
+          marginTop: 0,
+          background: colors.background
         }}
+        tabPosition={screenSize === 'desktop' ? 'left' : 'top'}
       />
     </div>
   );

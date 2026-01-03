@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Avatar, Modal, Button } from 'antd';
-import { EditOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles/colors';
+import EditProfileModal from '../components/EditProfileModal';
+import EditKinModal from '../components/EditKinModal';
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -173,21 +174,6 @@ const ProfilePage = () => {
             {user.email}
           </div>
         </div>
-        <div style={{
-          position: 'absolute',
-          bottom: '12px',
-          right: '12px',
-          width: '32px',
-          height: '32px',
-          borderRadius: '50%',
-          background: '#5a4a7a',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}>
-          <EditOutlined style={{ color: '#ffffff', fontSize: '14px' }} />
-        </div>
       </div>
 
       {/* Profile Details Section */}
@@ -303,25 +289,19 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      {/* Edit Profile Modal - TODO: Implement */}
-      <Modal
-        title="Edit Profile"
-        open={editProfileVisible}
-        onCancel={() => setEditProfileVisible(false)}
-        footer={null}
-      >
-        <p>Edit profile form coming soon...</p>
-      </Modal>
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={editProfileVisible}
+        onClose={() => setEditProfileVisible(false)}
+        user={user}
+      />
 
-      {/* Edit Kin Modal - TODO: Implement */}
-      <Modal
-        title="Edit Kin Details"
-        open={editKinVisible}
-        onCancel={() => setEditKinVisible(false)}
-        footer={null}
-      >
-        <p>Edit kin details form coming soon...</p>
-      </Modal>
+      {/* Edit Kin Modal */}
+      <EditKinModal
+        visible={editKinVisible}
+        onClose={() => setEditKinVisible(false)}
+        user={user}
+      />
     </div>
   );
 };
