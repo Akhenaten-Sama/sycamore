@@ -70,7 +70,7 @@ const WatchLivePage = () => {
   const loadLiveEvents = async () => {
     try {
       setLoading(true);
-      const response = await ApiClient.getEvents();
+      const response = await ApiClient.getEvents('upcoming', 1, 50);
       
       if (response?.data) {
         // Filter events that have streaming enabled and are currently live or scheduled

@@ -144,7 +144,7 @@ const EventsPage = () => {
               <div
                 style={{
                   height: '200px',
-                  background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.image}) center/cover`,
+                  background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.banner || event.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80'}) center/cover`,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -237,7 +237,7 @@ const EventsPage = () => {
             <div 
               style={{ 
                 height: 200, 
-                background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.image}) center/cover`,
+                background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.banner || event.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80'}) center/cover`,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',

@@ -19,10 +19,12 @@ const EventsPage = () => {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const response = await ApiClient.getEvents();
+      const response = await ApiClient.getEvents('upcoming', 1, 50);
       console.log('Events response:', response);
       
-      if (response && Array.isArray(response)) {
+      if (response && response.data && Array.isArray(response.data)) {
+        setEvents(response.data);
+      } else if (response && Array.isArray(response)) {
         setEvents(response);
       } else if (response && response.events && Array.isArray(response.events)) {
         // Handle case where events are nested under events property
@@ -57,7 +59,7 @@ const EventsPage = () => {
       <div 
         style={{ 
           height: 200, 
-          background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.image}) center/cover`,
+          background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${event.banner || event.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80'}) center/cover`,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
