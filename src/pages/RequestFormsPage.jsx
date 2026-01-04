@@ -9,7 +9,9 @@ import {
   TeamOutlined,
   BookOutlined,
   CarOutlined,
-  HomeOutlined
+  HomeOutlined,
+  PlusOutlined,
+  SendOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -139,7 +141,7 @@ const RequestFormsPage = () => {
     >
       <div style={{ textAlign: 'center', marginBottom: '16px' }}>
         <div style={{ 
-          fontSize: '48px', 
+          fontSize: '40px', 
           color: formData.color,
           marginBottom: '12px'
         }}>
@@ -157,26 +159,37 @@ const RequestFormsPage = () => {
         </Tag>
       </div>
       
-      <Title level={4} style={{ color: colors.text, textAlign: 'center', marginBottom: '8px' }}>
+      <Title level={4} style={{ color: colors.text, textAlign: 'center', marginBottom: '12px' }}>
         {formData.title}
       </Title>
       
-      <Paragraph style={{ color: colors.text, opacity: 0.7, textAlign: 'center', marginBottom: '20px' }}>
+      <Paragraph 
+        style={{ 
+          color: colors.text, 
+          opacity: 0.8, 
+          textAlign: 'center', 
+          marginBottom: '24px',
+          minHeight: '60px'
+        }}
+        ellipsis={{ rows: 3 }}
+      >
         {formData.description}
       </Paragraph>
       
       <Button 
         type="primary"
         block
-        style={{
-          backgroundColor: formData.color,
-          borderColor: formData.color,
-          borderRadius: '8px',
-          fontWeight: 'bold'
-        }}
+        size="large"
+        icon={<SendOutlined />}
         onClick={() => openForm(formData)}
+        style={{
+          background: '#2d7a7a',
+          borderColor: '#2d7a7a',
+          borderRadius: '8px',
+          fontWeight: 600
+        }}
       >
-        Open Form
+        Submit Request
       </Button>
     </Card>
   );
@@ -293,17 +306,34 @@ const RequestFormsPage = () => {
   }
 
   return (
-    <div style={{ background: colors.background, minHeight: '100vh', padding: '16px', paddingBottom: '80px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <Title level={2} style={{ color: colors.text }}>
-          <FormOutlined style={{ marginRight: '8px', color: colors.primary }} />
-          {category === 'Prayer' ? 'Prayer Need' : 'Request Forms'}
-        </Title>
-        <Paragraph style={{ color: colors.text, opacity: 0.7, maxWidth: '600px', margin: '0 auto' }}>
-          {category === 'Prayer' 
-            ? 'We\'d love to stand in prayer with you. Please feel free to send your request and let\'s join you in faith.'
-            : 'Need support or help with church events? Share your request and our team will be in touch!'}
-        </Paragraph>
+    <div style={{ 
+      background: colors.background, 
+      minHeight: '100vh', 
+      padding: '16px',
+      paddingBottom: '80px'
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '24px',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
+        <div>
+          <Title level={2} style={{ color: colors.text, marginBottom: '4px' }}>
+            {category === 'Prayer' ? (
+              <><HeartOutlined style={{ marginRight: '8px', color: '#f5222d' }} />Prayer Needs</>
+            ) : (
+              <><FormOutlined style={{ marginRight: '8px', color: colors.primary }} />Request Forms</>
+            )}
+          </Title>
+          <Paragraph style={{ color: colors.text, opacity: 0.7, margin: 0 }}>
+            {category === 'Prayer' 
+              ? 'We\'d love to stand in prayer with you. Share your prayer needs here.'
+              : 'Need support or help with church events? Submit your request here!'}
+          </Paragraph>
+        </div>
       </div>
 
       {loading ? (
@@ -321,9 +351,12 @@ const RequestFormsPage = () => {
         </Row>
       ) : (
         <Empty 
-          description={<span style={{ color: colors.text, opacity: 0.7 }}>
-            {category === 'Prayer' ? 'No prayer request forms available' : 'No request forms available'}
-          </span>}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <span style={{ color: colors.text, opacity: 0.7 }}>
+              Nothing here yet - check back soon for updates
+            </span>
+          }
         />
       )}
 
@@ -363,9 +396,11 @@ const RequestFormsPage = () => {
                   type="primary" 
                   htmlType="submit"
                   loading={submitting}
+                  icon={<SendOutlined />}
                   style={{
-                    backgroundColor: selectedForm.color,
-                    borderColor: selectedForm.color
+                    background: '#2d7a7a',
+                    borderColor: '#2d7a7a',
+                    fontWeight: 600
                   }}
                 >
                   Submit Request

@@ -390,7 +390,7 @@ const AuthModal = ({ visible, onClose }) => {
       children: (
         <div>
           <Title level={4} style={{ textAlign: 'center', marginBottom: 24 }}>
-            Join Our Family! ✨
+            Join Your Family! ✨
           </Title>
           <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 24 }}>
             Become part of the Sycamore Church community

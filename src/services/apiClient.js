@@ -542,6 +542,13 @@ class ApiClient {
       body: JSON.stringify(testimonyData)
     });
   }
+
+  async updateTestimony(testimonyId, testimonyData) {
+    return this.request(`/mobile/testimonies/${testimonyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(testimonyData)
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

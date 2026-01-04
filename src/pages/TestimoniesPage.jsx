@@ -6,7 +6,8 @@ import {
   CalendarOutlined,
   UserOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  EditOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -26,6 +27,7 @@ const TestimoniesPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+  const [editingTestimony, setEditingTestimony] = useState(null);
 
   useEffect(() => {
     loadTestimonies();
@@ -70,12 +72,25 @@ const TestimoniesPage = () => {
         isPublic: true
       };
 
-      const response = await ApiClient.submitTestimony(testimonyData);
+      let response;
+      if (editingTestimony) {
+        // Update existing testimony
+        response = await ApiClient.updateTestimony(editingTestimony._id, testimonyData);
+        if (response?.success) {
+          message.success('Your praise report has been updated!');
+        }
+      } else {
+        // Create new testimony
+        response = await ApiClient.submitTestimony(testimonyData);
+        if (response?.success) {
+          message.success('Testimony submitted successfully! It will be reviewed by our team.');
+        }
+      }
       
       if (response?.success) {
-        message.success('Testimony submitted successfully! It will be reviewed by our team.');
         setIsModalVisible(false);
         form.resetFields();
+        setEditingTestimony(null);
         loadTestimonies();
       } else {
         throw new Error(response?.error || 'Failed to submit testimony');
@@ -86,6 +101,22 @@ const TestimoniesPage = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEdit = (testimony) => {
+    setEditingTestimony(testimony);
+    form.setFieldsValue({
+      title: testimony.title,
+      testimony: testimony.testimony,
+      category: testimony.category
+    });
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+    setEditingTestimony(null);
   };
 
   const getCategoryColor = (category) => {
@@ -167,6 +198,20 @@ const TestimoniesPage = () => {
           </Text>
         </div>
       </div>
+      
+      {/* Show Edit button for pending testimonies submitted by current user */}
+      {!testimony.isApproved && (testimony.submittedBy?._id === user?.memberId || testimony.submittedBy?._id === user?.id || testimony.submittedBy?._id === user?._id) && (
+        <div style={{ marginTop: '12px' }}>
+          <Button 
+            type="primary" 
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(testimony)}
+          >
+            Edit
+          </Button>
+        </div>
+      )}
     </Card>
   );
 
@@ -270,11 +315,11 @@ const TestimoniesPage = () => {
         title={
           <Space>
             <HeartOutlined style={{ color: '#f5222d' }} />
-            <span>Share Your Praise Report</span>
+            <span>{editingTestimony ? 'Edit Your Praise Report' : 'Share Your Praise Report'}</span>
           </Space>
         }
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={handleModalClose}
         footer={null}
         width={600}
       >
@@ -284,7 +329,9 @@ const TestimoniesPage = () => {
           onFinish={handleSubmit}
         >
           <Paragraph style={{ color: colors.text, opacity: 0.7, marginBottom: '20px' }}>
-            Your story matters! Share how God has worked in your life, and we'll review it before sharing it with your church family.
+            {editingTestimony 
+              ? 'Update your testimony and submit it for review again.'
+              : 'Your story matters! Share how God has worked in your life, and we\'ll review it before sharing it with your church family.'}
           </Paragraph>
 
           <Form.Item
@@ -328,7 +375,7 @@ const TestimoniesPage = () => {
 
           <Form.Item style={{ marginBottom: 0 }}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={() => setIsModalVisible(false)}>
+              <Button onClick={handleModalClose}>
                 Cancel
               </Button>
               <Button 
@@ -337,7 +384,7 @@ const TestimoniesPage = () => {
                 loading={submitting}
                 icon={<PlusOutlined />}
               >
-                Share your story
+                {editingTestimony ? 'Update' : 'Share your story'}
               </Button>
             </Space>
           </Form.Item>

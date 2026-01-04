@@ -391,7 +391,7 @@ const Devotionals = ({ user }) => {
     }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Title level={2} style={{ color: colors.text }}>
-          <CompassOutlined /> Daily Devotionals
+          <CompassOutlined /> Devotionals
         </Title>
         <Paragraph type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
           Take a few quiet moments to hear from God and reflect on His word.
