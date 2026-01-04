@@ -394,7 +394,7 @@ const Devotionals = ({ user }) => {
           <CompassOutlined /> Daily Devotionals
         </Title>
         <Paragraph type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
-          Grow closer to God through daily Bible study and reflection
+          Take a few quiet moments to hear from God and reflect on His word.
         </Paragraph>
       </div>
 

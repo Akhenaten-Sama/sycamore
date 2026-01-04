@@ -297,12 +297,12 @@ const RequestFormsPage = () => {
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <Title level={2} style={{ color: colors.text }}>
           <FormOutlined style={{ marginRight: '8px', color: colors.primary }} />
-          {category === 'Prayer' ? 'Prayer Requests' : 'Request Forms'}
+          {category === 'Prayer' ? 'Prayer Need' : 'Request Forms'}
         </Title>
         <Paragraph style={{ color: colors.text, opacity: 0.7, maxWidth: '600px', margin: '0 auto' }}>
           {category === 'Prayer' 
-            ? 'Submit your prayer requests and our team will pray for you.'
-            : 'Submit requests for prayer, events, counseling, and more. Our team will review and respond to your request promptly.'}
+            ? 'We\'d love to stand in prayer with you. Please feel free to send your request and let\'s join you in faith.'
+            : 'Need support or help with church events? Share your request and our team will be in touch!'}
         </Paragraph>
       </div>
 

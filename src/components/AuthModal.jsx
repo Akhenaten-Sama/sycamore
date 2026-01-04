@@ -362,7 +362,7 @@ const AuthModal = ({ visible, onClose }) => {
           size="large"
           icon={<UserAddOutlined />}
         >
-          Join Our Church Family
+          Join Your Church Family
         </Button>
       </Form.Item>
     </Form>

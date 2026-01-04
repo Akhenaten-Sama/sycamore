@@ -70,47 +70,6 @@ import ApiClient from './services/apiClient.js';
 const { Title, Paragraph, Text } = Typography;
 const { Meta } = Card;
 
-// Mock data for events with banners
-const EVENTS_DATA = [
-  {
-    id: 1,
-    title: "Sunday Worship Service",
-    description: "Join us for our weekly worship service filled with praise, worship, and powerful preaching.",
-    date: "2025-07-27",
-    time: "09:00 AM",
-    location: "Main Auditorium",
-    bannerType: "video",
-    banner: "https://www.w3schools.com/html/mov_bbb.mp4",
-    thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-    attendees: 450,
-    category: "Worship"
-  },
-  {
-    id: 2,
-    title: "Youth Fellowship",
-    description: "An exciting time of fellowship, games, and spiritual growth for our young people.",
-    date: "2025-07-30",
-    time: "06:00 PM",
-    location: "Youth Hall",
-    bannerType: "image",
-    banner: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80",
-    attendees: 120,
-    category: "Youth"
-  },
-  {
-    id: 3,
-    title: "Prayer Meeting",
-    description: "Come together in prayer and intercession for our community and nation.",
-    date: "2025-08-02",
-    time: "07:00 PM",
-    location: "Prayer Room",
-    bannerType: "image",
-    banner: "https://images.unsplash.com/photo-1507692049790-de58290a4334?auto=format&fit=crop&w=800&q=80",
-    attendees: 85,
-    category: "Prayer"
-  }
-];
-
 // Mock data for archives/old programs
 const ARCHIVES_DATA = [
   {
@@ -238,16 +197,19 @@ function ChurchMobileApp() {
     try {
       setLoading(true);
       const response = await ApiClient.getEvents();
-      if (response && response.length > 0) {
+      // API returns {success: true, data: [...], pagination: {...}}
+      if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+        setEvents(response.data);
+      } else if (response && Array.isArray(response) && response.length > 0) {
         setEvents(response);
       } else {
-        // Fallback to mock data if API fails
-        setEvents(EVENTS_DATA);
+        console.log('No events from API, response:', response);
+        setEvents([]);
       }
     } catch (error) {
       console.error('Failed to load events:', error);
-      message.error('Failed to load events. Using offline data.');
-      setEvents(EVENTS_DATA);
+      message.error('Failed to load events');
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -1306,7 +1268,7 @@ function ChurchMobileApp() {
                 icon={<SendOutlined />}
                 style={{ width: "100%", height: 48 }}
               >
-                Submit Prayer Request
+                Send Prayer
               </Button>
             </Form.Item>
           </Form>

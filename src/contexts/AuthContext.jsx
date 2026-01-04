@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('authToken', response.token);
         setUser(response.user);
         setIsAuthenticated(true);
-        message.success('Registration successful! Welcome to Sycamore Church! 🙏');
+        message.success('You\'re all set! Welcome to your church family! 🙏');
         return { success: true };
       } else {
         message.error(response?.message || 'Registration failed');

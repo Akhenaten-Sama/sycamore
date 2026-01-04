@@ -498,7 +498,7 @@ const Giving = ({ user }) => {
           fontWeight: 700
         }}
       >
-        Giving Options
+        Your generosity changes lives. We're thrilled you're part of what God is doing!
       </Title>
       
       <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
@@ -631,7 +631,7 @@ const Giving = ({ user }) => {
             No giving history to display yet
           </Title>
           <Paragraph style={{ color: isDarkMode ? '#999' : '#666', marginBottom: 24, fontSize: '14px' }}>
-            Your donations will appear here when you give
+            Your giving will show up here once you give. Thank you for joining in!
           </Paragraph>
           <Button 
             onClick={() => setDonationModal(true)}
@@ -646,7 +646,7 @@ const Giving = ({ user }) => {
               fontWeight: 600
             }}
           >
-            Make your first donation
+            Partner with God
           </Button>
         </div>
       )}

@@ -115,56 +115,7 @@ const EventsPage = () => {
     }
   };
 
-  const MOCK_EVENTS = [
-    {
-      id: 1,
-      name: "Sunday Worship Service",
-      title: "Sunday Worship Service",
-      description: "Join us for our weekly worship service filled with praise, worship, and powerful preaching.",
-      date: "2025-09-15",
-      time: "09:00 AM",
-      location: "Main Auditorium",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
-      attendees: 450,
-      category: "Worship"
-    },
-    {
-      id: 2,
-      name: "Youth Fellowship",
-      title: "Youth Fellowship",
-      description: "An exciting time of fellowship, games, and spiritual growth for our young people.",
-      date: "2025-09-18",
-      time: "06:00 PM",
-      location: "Youth Hall",
-      image: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80",
-      attendees: 120,
-      category: "Youth"
-    },
-    {
-      id: 3,
-      name: "Bible Study",
-      title: "Bible Study",
-      description: "Deep dive into God's word with our midweek Bible study session.",
-      date: "2025-09-19",
-      time: "07:00 PM",
-      location: "Fellowship Hall",
-      image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=800&q=80",
-      attendees: 85,
-      category: "Study"
-    },
-    {
-      id: 4,
-      name: "Community Outreach",
-      title: "Community Outreach",
-      description: "Join us as we serve our local community with food distribution and prayer.",
-      date: "2025-09-21",
-      time: "10:00 AM",
-      location: "City Park",
-      image: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=800&q=80",
-      attendees: 200,
-      category: "Outreach"
-    }
-  ];
+  // Events are loaded from the API - see loadEvents() function
 
   const handleMarkAttendance = (event) => {
     setSelectedEvent(event);
@@ -464,7 +415,7 @@ const EventsPage = () => {
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
-          <Empty description="No events found" style={{ color: colors.textSecondary }} />
+          <Empty description="Nothing here yet - check back soon for updates" style={{ color: colors.textSecondary }} />
         </div>
       )}
 

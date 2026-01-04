@@ -311,7 +311,7 @@ const BiblePage = () => {
               )}
             />
           ) : searchMode ? (
-            <Empty description="No results found" />
+            <Empty description="Nothing here yet - check back soon for updates" />
           ) : (
             <Card style={{ textAlign: 'center', padding: '50px 0' }}>
               <BookOutlined style={{ fontSize: '48px', color: '#1890ff', marginBottom: 16 }} />

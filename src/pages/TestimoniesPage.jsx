@@ -221,10 +221,10 @@ const TestimoniesPage = () => {
         <div>
           <Title level={2} style={{ color: colors.text, marginBottom: '4px' }}>
             <HeartOutlined style={{ marginRight: '8px', color: '#f5222d' }} />
-            Testimonies
+            Praise Reports
           </Title>
           <Paragraph style={{ color: colors.text, opacity: 0.7, margin: 0 }}>
-            Share how God has blessed you and read others' testimonies
+            Let your story encourage others. Share what God is doing in your life here.
           </Paragraph>
         </div>
         <Button 
@@ -233,7 +233,7 @@ const TestimoniesPage = () => {
           onClick={() => setIsModalVisible(true)}
           size="large"
         >
-          Share Testimony
+          Share your praise report
         </Button>
       </div>
 
@@ -270,7 +270,7 @@ const TestimoniesPage = () => {
         title={
           <Space>
             <HeartOutlined style={{ color: '#f5222d' }} />
-            <span>Share Your Testimony</span>
+            <span>Share Your Praise Report</span>
           </Space>
         }
         open={isModalVisible}
@@ -284,7 +284,7 @@ const TestimoniesPage = () => {
           onFinish={handleSubmit}
         >
           <Paragraph style={{ color: colors.text, opacity: 0.7, marginBottom: '20px' }}>
-            Share how God has worked in your life. Your testimony will be reviewed before being published.
+            Your story matters! Share how God has worked in your life, and we'll review it before sharing it with your church family.
           </Paragraph>
 
           <Form.Item
@@ -337,7 +337,7 @@ const TestimoniesPage = () => {
                 loading={submitting}
                 icon={<PlusOutlined />}
               >
-                Submit Testimony
+                Share your story
               </Button>
             </Space>
           </Form.Item>

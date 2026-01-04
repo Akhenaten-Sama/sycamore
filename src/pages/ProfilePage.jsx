@@ -131,7 +131,7 @@ const ProfilePage = () => {
           color: isDarkMode ? '#999' : '#666',
           margin: 0
         }}>
-          Join communities to connect with fellow believers
+          Life is better together! Connect, share, and do life with your church family.
         </p>
       </div>
 

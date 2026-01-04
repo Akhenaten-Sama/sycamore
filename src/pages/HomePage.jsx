@@ -202,7 +202,7 @@ const HomePage = () => {
           fontWeight: 700,
           position: 'relative',
           zIndex: 1
-        }}>Welcome to Sycamore Church 👋</div>
+        }}>You're home 👋</div>
         <Text style={{ 
           fontSize: '13px',
           color: 'rgba(255, 255, 255, 0.9)',
@@ -211,7 +211,7 @@ const HomePage = () => {
           position: 'relative',
           zIndex: 1
         }}>
-          It's my church as it's your church
+          We're honored to walk this journey with you.
         </Text>
       </div>
 
@@ -331,7 +331,7 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Grow in Faith Section */}
+      {/* Grow Section */}
       <div style={{ padding: '20px 16px' }}>
         <Title level={3} style={{ 
           color: isDarkMode ? '#fff' : '#000',
@@ -339,7 +339,7 @@ const HomePage = () => {
           fontSize: '18px',
           fontWeight: 700
         }}>
-          Grow in Faith
+          Grow
         </Title>
         
         <Row gutter={[8, 8]}>
@@ -423,7 +423,7 @@ const HomePage = () => {
                   lineHeight: '1.3',
                   textShadow: '0 1px 3px rgba(0,0,0,0.3)'
                 }}>
-                  The Holy<br/>Bible
+                  Engage the<br/>Bible
                 </Title>
               </div>
               <Text style={{ 

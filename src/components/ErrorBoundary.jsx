@@ -34,7 +34,7 @@ class ErrorBoundary extends React.Component {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <h2 style={{ color: '#ff4d4f' }}>Something went wrong</h2>
+          <h2 style={{ color: '#ff4d4f' }}>Oops! That didn't work - please try again</h2>
           <p style={{ color: '#666', marginBottom: '20px' }}>
             The app encountered an error. Please refresh the page to try again.
           </p>

@@ -365,7 +365,7 @@ const SermonNotesPage = () => {
           <BookOutlined /> Sermon Notes
         </Title>
         <Text type="secondary" style={{ color: isDarkMode ? '#888' : '#666' }}>
-          Keep track of your spiritual insights and reflections
+          Just because.. If you're taking notes, it's not-able. If you're not, it's not-orious.
         </Text>
       </div>
 

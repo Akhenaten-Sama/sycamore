@@ -424,7 +424,7 @@ const Communities = ({ user }) => {
               marginBottom: 0
             }}
           >
-            Join communities to connect with fellow believers
+            Life is better together! Connect, share, and do life with your church family.
           </Paragraph>
         </div>
 
