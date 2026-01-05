@@ -40,9 +40,10 @@ import {
 import ApiClient from '../services/apiClient';
 import { useTheme } from '../contexts/ThemeContext';
 import { getColors } from '../styles/colors';
+import CommentSection from './CommentSection';
+import LikeButton from './LikeButton';
 
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
 
 const Devotionals = ({ user }) => {
   const { isDarkMode } = useTheme();
@@ -50,8 +51,6 @@ const Devotionals = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [devotionals, setDevotionals] = useState([]);
   const [selectedDevotional, setSelectedDevotional] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [commentForm] = Form.useForm();
   const [viewModal, setViewModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [monthlyProgress, setMonthlyProgress] = useState(0);
@@ -107,17 +106,6 @@ const Devotionals = ({ user }) => {
     }
   };
 
-  const loadComments = async (devotionalId) => {
-    try {
-      const response = await ApiClient.getDevotionalComments(devotionalId);
-      const commentsData = response?.data || response || [];
-      setComments(Array.isArray(commentsData) ? commentsData : []);
-    } catch (error) {
-      console.error('Failed to load comments:', error);
-      setComments([]);
-    }
-  };
-
   const handleLike = async (devotionalId) => {
     if (!user) {
       message.warning('Please sign in to like devotionals');
@@ -143,51 +131,11 @@ const Devotionals = ({ user }) => {
       }
 
       message.success(liked ? 'Devotional liked! ❤️' : 'Like removed');
+      return { likes: likeCount, isLiked: liked };
     } catch (error) {
       console.error('Failed to like devotional:', error);
       message.error('Failed to like devotional');
-    }
-  };
-
-  const handleComment = async (values) => {
-    if (!user) {
-      message.warning('Please sign in to comment');
-      return;
-    }
-
-    if (!selectedDevotional || !selectedDevotional.id) {
-      message.error('No devotional selected. Please try again.');
-      console.error('selectedDevotional:', selectedDevotional);
-      return;
-    }
-
-    try {
-      const commentData = {
-        content: values.comment,
-        devotionalId: selectedDevotional.id,
-        userId: user.memberId || user.id,
-      };
-
-      console.log('Sending comment data:', commentData);
-
-      const response = await ApiClient.addDevotionalComment(commentData);
-      
-      // Create a local comment object for immediate UI update
-      const newComment = {
-        id: Date.now(),
-        content: values.comment,
-        author: `${user.firstName} ${user.lastName}`,
-        avatar: user.profilePicture,
-        timestamp: new Date().toISOString(),
-        userId: user.memberId || user.id
-      };
-      
-      setComments(prev => [newComment, ...prev]);
-      commentForm.resetFields();
-      message.success('Comment added successfully!');
-    } catch (error) {
-      console.error('Failed to add comment:', error);
-      message.error('Failed to add comment');
+      throw error;
     }
   };
 
@@ -216,9 +164,6 @@ const Devotionals = ({ user }) => {
   const openDevotional = async (devotional) => {
     setSelectedDevotional(devotional);
     setViewModal(true);
-    
-    // Load comments and likes for the devotional
-    await loadComments(devotional.id);
     
     if (user) {
       try {
@@ -640,14 +585,13 @@ const Devotionals = ({ user }) => {
             </Card>
 
             <Space wrap style={{ marginBottom: 16 }}>
-              <Button 
-                type="text" 
-                icon={selectedDevotional.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-                onClick={() => handleLike(selectedDevotional.id)}
+              <LikeButton
+                likes={selectedDevotional.likes}
+                isLiked={selectedDevotional.isLiked}
+                onLike={handleLike}
+                targetId={selectedDevotional.id}
                 style={{ color: isDarkMode ? '#888' : '#666' }}
-              >
-                {selectedDevotional.likes || 0} {selectedDevotional.isLiked ? 'Liked' : 'Like'}
-              </Button>
+              />
               {!selectedDevotional.isRead && (
                 <Button 
                   type="primary"
@@ -663,51 +607,20 @@ const Devotionals = ({ user }) => {
               )}
             </Space>
 
-            <Divider style={{ borderColor: isDarkMode ? '#2a2a2a' : '#e0e0e0' }} />
-
-            <Title level={4} style={{ color: colors.text }}>
-              <MessageOutlined /> Comments ({comments.length})
-            </Title>
-
-            {user && (
-              <Form
-                form={commentForm}
-                onFinish={handleComment}
-                style={{ marginBottom: 16 }}
-              >
-                <Form.Item name="comment" rules={[{ required: true, message: 'Please enter a comment' }]}>
-                  <TextArea 
-                    placeholder="Share your thoughts or testimony..." 
-                    rows={3}
-                    autoSize={{ minRows: 3, maxRows: 6 }}
-                  />
-                </Form.Item>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
-                    Post Comment
-                  </Button>
-                </Form.Item>
-              </Form>
-            )}
-
-            <List
-              dataSource={comments}
-              renderItem={comment => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar src={comment.avatar} icon={<UserOutlined />} />}
-                    title={comment.author}
-                    description={
-                      <div>
-                        <Paragraph>{comment.content}</Paragraph>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          {new Date(comment.timestamp).toLocaleString()}
-                        </Text>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
+            <CommentSection
+              targetId={selectedDevotional.id}
+              targetType="devotional"
+              getComments={ApiClient.getDevotionalComments.bind(ApiClient)}
+              addComment={async (id, data) => {
+                const commentData = {
+                  ...data,
+                  devotionalId: id,
+                  userId: user?.memberId || user?.id,
+                };
+                return ApiClient.addDevotionalComment(commentData);
+              }}
+              autoRefresh={true}
+              refreshInterval={3000}
             />
           </div>
         )}

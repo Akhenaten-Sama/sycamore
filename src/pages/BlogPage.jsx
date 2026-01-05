@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Row, Col, Card, Button, Tag, Space, Spin, Empty, Avatar } from 'antd';
+import { Typography, Row, Col, Card, Button, Tag, Space, Spin, Empty, Avatar, Modal, Divider } from 'antd';
 import { 
   CalendarOutlined, 
   UserOutlined, 
@@ -8,18 +8,25 @@ import {
   MessageOutlined,
   HeartFilled,
   BookOutlined,
-  EditOutlined
+  EditOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import colors from '../styles/colors';
+import CommentSection from '../components/CommentSection';
+import LikeButton from '../components/LikeButton';
 
 const { Title, Paragraph, Text } = Typography;
 
 const BlogPage = () => {
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBlog, setSelectedBlog] = useState(null);
+  const [viewModal, setViewModal] = useState(false);
 
   useEffect(() => {
     loadBlogPosts();
@@ -208,6 +215,10 @@ const BlogPage = () => {
           type="text" 
           size="small"
           icon={<EyeOutlined />}
+          onClick={() => {
+            setSelectedBlog(post);
+            setViewModal(true);
+          }}
           style={{
             color: isDarkMode ? '#999' : '#666',
             fontSize: '12px',
@@ -285,6 +296,97 @@ const BlogPage = () => {
           />
         )}
       </div>
+
+      {/* Blog Detail Modal */}
+      <Modal
+        open={viewModal}
+        onCancel={() => setViewModal(false)}
+        footer={null}
+        width="90%"
+        style={{ maxWidth: 800 }}
+        centered
+      >
+        {selectedBlog && (
+          <div>
+            {selectedBlog.image && (
+              <div style={{ marginBottom: 16, marginTop: -24, marginLeft: -24, marginRight: -24 }}>
+                <img 
+                  src={selectedBlog.image} 
+                  alt={selectedBlog.title}
+                  style={{ width: '100%', maxHeight: 300, objectFit: 'cover' }}
+                />
+              </div>
+            )}
+
+            <Title level={2} style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+              {selectedBlog.title}
+            </Title>
+
+            <Space style={{ marginBottom: 16 }}>
+              <Avatar size={32} icon={<UserOutlined />} />
+              <div>
+                <div style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                  {selectedBlog.author}
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  <CalendarOutlined /> {new Date(selectedBlog.date).toLocaleDateString()} • {selectedBlog.readTime}
+                </Text>
+              </div>
+            </Space>
+
+            <Tag color="blue" style={{ marginBottom: 16 }}>
+              {selectedBlog.category}
+            </Tag>
+
+            <Paragraph style={{ 
+              color: isDarkMode ? '#d0d0d0' : '#333',
+              fontSize: 16,
+              lineHeight: 1.8
+            }}>
+              {selectedBlog.content}
+            </Paragraph>
+
+            <Space wrap style={{ marginBottom: 16 }}>
+              <LikeButton
+                likes={selectedBlog.likes}
+                isLiked={selectedBlog.isLiked}
+                onLike={async (blogId) => {
+                  try {
+                    const response = await ApiClient.likeBlogPost(blogId);
+                    const { liked, likeCount } = response;
+                    setPosts(prev => prev.map(post => 
+                      post.id === blogId 
+                        ? { ...post, likes: likeCount, isLiked: liked }
+                        : post
+                    ));
+                    setSelectedBlog(prev => ({ ...prev, likes: likeCount, isLiked: liked }));
+                    return { likes: likeCount, isLiked: liked };
+                  } catch (error) {
+                    throw error;
+                  }
+                }}
+                targetId={selectedBlog.id}
+              />
+            </Space>
+
+            <CommentSection
+              targetId={selectedBlog.id}
+              targetType="blog"
+              getComments={ApiClient.getBlogComments.bind(ApiClient)}
+              addComment={async (id, data) => {
+                const commentData = {
+                  ...data,
+                  blogId: id,
+                  userId: user?.memberId || user?.id,
+                };
+                return ApiClient.addBlogComment(commentData);
+              }}
+              autoRefresh={true}
+              refreshInterval={3000}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

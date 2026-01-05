@@ -7,15 +7,9 @@ import {
   Button,
   Modal,
   Image,
-  List,
-  Avatar,
-  Input,
-  Form,
   message,
   Space,
   Tag,
-  Divider,
-  Tabs,
   Empty,
   Spin,
   Badge,
@@ -27,12 +21,8 @@ import {
 import {
   PlayCircleOutlined,
   PictureOutlined,
-  LikeOutlined,
   MessageOutlined,
   ShareAltOutlined,
-  SendOutlined,
-  HeartOutlined,
-  HeartFilled,
   EyeOutlined,
   CalendarOutlined,
   UserOutlined,
@@ -44,9 +34,10 @@ import {
 } from '@ant-design/icons';
 import ApiClient from '../services/apiClient';
 import { useTheme } from '../contexts/ThemeContext';
+import CommentSection from './CommentSection';
+import LikeButton from './LikeButton';
 
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
 
 const MediaGallery = ({ user }) => {
   const { isDarkMode } = useTheme();
@@ -54,13 +45,11 @@ const MediaGallery = ({ user }) => {
   const [media, setMedia] = useState([]);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [viewModal, setViewModal] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [commentForm] = Form.useForm();
   const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   
   // Filter states
-  const [mediaTypeFilter, setMediaTypeFilter] = useState('All Media (120)');
+  const [mediaTypeFilter, setMediaTypeFilter] = useState('all');
   const [sortFilter, setSortFilter] = useState('Recently added');
 
   // Function to get appropriate icon for media type
@@ -323,29 +312,6 @@ const MediaGallery = ({ user }) => {
     }
   };
 
-  const loadComments = async (mediaId) => {
-    try {
-      const response = await ApiClient.getMediaComments(mediaId);
-      
-      // Handle nested response format
-      const commentsData = response?.data || response || [];
-      
-      // Transform API response to match UI format
-      const transformedComments = commentsData.map(comment => ({
-        id: comment._id || comment.id,
-        content: comment.content,
-        author: comment.author || (comment.authorId ? `${comment.authorId.firstName} ${comment.authorId.lastName}` : 'Unknown User'),
-        avatar: comment.avatar || comment.authorId?.profilePicture || `https://ui-avatars.io/api/?name=${encodeURIComponent(comment.author || 'Unknown User')}`,
-        timestamp: comment.timestamp || formatDate(comment.createdAt)
-      }));
-      
-      setComments(transformedComments);
-    } catch (error) {
-      console.error('Failed to load comments:', error);
-      setComments([]);
-    }
-  };
-
   const handleLike = async (mediaId) => {
     if (!user) {
       message.warning('Please sign in to like media');
@@ -372,47 +338,11 @@ const MediaGallery = ({ user }) => {
       }
 
       message.success(liked ? 'Added to favorites!' : 'Removed from favorites!');
+      return { likes: likeCount, isLiked: liked };
     } catch (error) {
       console.error('Like failed:', error);
       message.error('Failed to update like status');
-    }
-  };
-
-  const handleComment = async (values) => {
-    console.log('handleComment called with:', values);
-    console.log('User object:', user);
-    console.log('Selected media:', selectedMedia);
-    
-    if (!user) {
-      message.warning('Please sign in to comment');
-      return;
-    }
-
-    try {
-      const commentData = {
-        content: values.comment,
-      };
-
-      console.log('Sending comment data:', commentData);
-      const response = await ApiClient.addMediaComment(selectedMedia.id, commentData);
-      console.log('Comment response:', response);
-      
-      // Add comment to local state immediately for better UX
-      const responseData = response?.data || response;
-      const comment = {
-        id: responseData?._id || responseData?.id || Date.now(),
-        content: values.comment,
-        author: `${user.firstName} ${user.lastName}`,
-        avatar: user.profilePicture || `https://ui-avatars.io/api/?name=${encodeURIComponent(`${user.firstName} ${user.lastName}`)}`,
-        timestamp: 'Just now',
-      };
-      
-      setComments(prev => [comment, ...prev]);
-      commentForm.resetFields();
-      message.success('Comment added successfully!');
-    } catch (error) {
-      console.error('Failed to add comment:', error);
-      message.error('Failed to add comment');
+      throw error;
     }
   };
 
@@ -468,7 +398,6 @@ const MediaGallery = ({ user }) => {
   const openMediaView = (mediaItem) => {
     setSelectedMedia(mediaItem);
     setViewModal(true);
-    loadComments(mediaItem.id);
   };
 
   const MediaCard = ({ item }) => {
@@ -578,20 +507,20 @@ const MediaGallery = ({ user }) => {
             paddingTop: '8px',
             borderTop: `1px solid ${isDarkMode ? '#2a2a2a' : '#f0f0f0'}`
           }}>
-            <Button 
-              type="text" 
+            <LikeButton
+              likes={item.likes}
+              isLiked={item.isLiked}
+              onLike={handleLike}
+              targetId={item.id}
+              showText={false}
               size="small"
-              icon={item.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-              onClick={() => handleLike(item.id)}
               style={{
                 color: isDarkMode ? '#999' : '#666',
                 fontSize: '12px',
                 padding: '4px 8px',
                 height: 'auto'
               }}
-            >
-              {item.likes || 0}
-            </Button>
+            />
             <Button 
               type="text" 
               size="small"
@@ -651,17 +580,8 @@ const MediaGallery = ({ user }) => {
     let filtered = [...media];
     
     // Apply media type filter
-    if (mediaTypeFilter !== 'All Media (120)') {
-      const typeMap = {
-        'Videos (120)': 'video',
-        'Audios (120)': 'audio',
-        'Photos (120)': 'photo',
-        'Documents (120)': 'document'
-      };
-      const filterType = typeMap[mediaTypeFilter];
-      if (filterType) {
-        filtered = filtered.filter(item => item.type === filterType);
-      }
+    if (mediaTypeFilter !== 'all') {
+      filtered = filtered.filter(item => item.type === mediaTypeFilter);
     }
     
     // Apply time filter from sortFilter
@@ -830,50 +750,50 @@ const MediaGallery = ({ user }) => {
                   label: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '180px' }}>
                       <span>All Media ({media.length})</span>
-                      {mediaTypeFilter === 'All Media (120)' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
+                      {mediaTypeFilter === 'all' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
                     </div>
                   ),
-                  onClick: () => setMediaTypeFilter('All Media (120)')
+                  onClick: () => setMediaTypeFilter('all')
                 },
                 {
                   key: 'videos',
                   label: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '180px' }}>
                       <span>Videos ({filterMedia('video').length})</span>
-                      {mediaTypeFilter === 'Videos (120)' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
+                      {mediaTypeFilter === 'video' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
                     </div>
                   ),
-                  onClick: () => setMediaTypeFilter('Videos (120)')
+                  onClick: () => setMediaTypeFilter('video')
                 },
                 {
                   key: 'audios',
                   label: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '180px' }}>
                       <span>Audios ({filterMedia('audio').length})</span>
-                      {mediaTypeFilter === 'Audios (120)' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
+                      {mediaTypeFilter === 'audio' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
                     </div>
                   ),
-                  onClick: () => setMediaTypeFilter('Audios (120)')
+                  onClick: () => setMediaTypeFilter('audio')
                 },
                 {
                   key: 'photos',
                   label: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '180px' }}>
                       <span>Photos ({filterMedia('photo').length})</span>
-                      {mediaTypeFilter === 'Photos (120)' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
+                      {mediaTypeFilter === 'photo' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
                     </div>
                   ),
-                  onClick: () => setMediaTypeFilter('Photos (120)')
+                  onClick: () => setMediaTypeFilter('photo')
                 },
                 {
                   key: 'documents',
                   label: (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: '180px' }}>
                       <span>Documents ({filterMedia('document').length})</span>
-                      {mediaTypeFilter === 'Documents (120)' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
+                      {mediaTypeFilter === 'document' && <CheckOutlined style={{ color: isDarkMode ? '#4a9d9d' : '#2d7a7a' }} />}
                     </div>
                   ),
-                  onClick: () => setMediaTypeFilter('Documents (120)')
+                  onClick: () => setMediaTypeFilter('document')
                 }
               ]
             }}
@@ -895,7 +815,13 @@ const MediaGallery = ({ user }) => {
                 minWidth: '150px'
               }}
             >
-              <span>{mediaTypeFilter}</span>
+              <span>
+                {mediaTypeFilter === 'all' && `All Media (${media.length})`}
+                {mediaTypeFilter === 'video' && `Videos (${filterMedia('video').length})`}
+                {mediaTypeFilter === 'audio' && `Audios (${filterMedia('audio').length})`}
+                {mediaTypeFilter === 'photo' && `Photos (${filterMedia('photo').length})`}
+                {mediaTypeFilter === 'document' && `Documents (${filterMedia('document').length})`}
+              </span>
               <DownOutlined style={{ fontSize: '12px' }} />
             </Button>
           </Dropdown>
@@ -1063,13 +989,13 @@ const MediaGallery = ({ user }) => {
               <Tag>
                 <EyeOutlined /> {selectedMedia.views} views
               </Tag>
-              <Button 
-                type="text" 
-                icon={selectedMedia.isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-                onClick={() => handleLike(selectedMedia.id)}
-              >
-                {selectedMedia.likes}
-              </Button>
+              <LikeButton
+                likes={selectedMedia.likes}
+                isLiked={selectedMedia.isLiked}
+                onLike={handleLike}
+                targetId={selectedMedia.id}
+                showText={false}
+              />
               <Button 
                 type="text" 
                 icon={<ShareAltOutlined />}
@@ -1079,53 +1005,13 @@ const MediaGallery = ({ user }) => {
               </Button>
             </Space>
 
-            <Divider />
-
-            <Title level={4}>Comments ({comments.length})</Title>
-
-            {user ? (
-              <Form
-                form={commentForm}
-                onFinish={handleComment}
-                style={{ marginBottom: 16 }}
-              >
-                <Form.Item name="comment" rules={[{ required: true, message: 'Please enter a comment' }]}>
-                  <TextArea 
-                    placeholder="Write a comment..." 
-                    rows={2}
-                    autoSize={{ minRows: 2, maxRows: 4 }}
-                  />
-                </Form.Item>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
-                    Post Comment
-                  </Button>
-                </Form.Item>
-              </Form>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginBottom: '16px' }}>
-                <Text type="secondary">Please sign in to add comments</Text>
-              </div>
-            )}
-
-            <List
-              dataSource={comments}
-              renderItem={comment => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar src={comment.avatar} icon={<UserOutlined />} />}
-                    title={comment.author}
-                    description={
-                      <div>
-                        <Paragraph>{comment.content}</Paragraph>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          {new Date(comment.timestamp).toLocaleString()}
-                        </Text>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
+            <CommentSection
+              targetId={selectedMedia.id}
+              targetType="media"
+              getComments={ApiClient.getMediaComments.bind(ApiClient)}
+              addComment={ApiClient.addMediaComment.bind(ApiClient)}
+              autoRefresh={true}
+              refreshInterval={3000}
             />
           </div>
         )}

@@ -37,6 +37,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import ApiClient from '../services/apiClient';
+import CommentSection from './CommentSection';
+import LikeButton from './LikeButton';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -181,72 +183,32 @@ const CommunityView = ({ communityId, onBack }) => {
     const memberIdToUse = user?.memberId || user?.id;
     const isLiked = post.likes?.includes(memberIdToUse) || post.isLiked;
     const [showComments, setShowComments] = useState(false);
-    const [commentText, setCommentText] = useState('');
-    const [submittingComment, setSubmittingComment] = useState(false);
-    const [comments, setComments] = useState(post.comments || []);
-
-    const handleAddComment = async () => {
-      if (!user) {
-        message.warning('Please sign in to comment');
-        return;
-      }
-
-      if (!commentText.trim()) {
-        message.warning('Please enter a comment');
-        return;
-      }
-
-      try {
-        setSubmittingComment(true);
-        const commentData = {
-          content: commentText,
-          authorId: memberIdToUse
-        };
-
-        const response = await ApiClient.addCommunityPostComment(post.id, commentData);
-        
-        if (response?.data) {
-          setComments(prev => [...prev, response.data]);
-          setCommentText('');
-          message.success('Comment added successfully!');
-          
-          // Update the post in the community state
-          setCommunity(prev => ({
-            ...prev,
-            posts: prev.posts.map(p => 
-              p.id === post.id 
-                ? { ...p, comments: [...(p.comments || []), response.data] }
-                : p
-            )
-          }));
-        }
-      } catch (error) {
-        console.error('Error adding comment:', error);
-        message.error('Failed to add comment');
-      } finally {
-        setSubmittingComment(false);
-      }
-    };
     
     return (
       <div style={{ background: colors.cardBackground, marginBottom: 8, padding: 16, borderRadius: 8 }}>
         <List.Item
           actions={[
-            <Button 
-              type="text" 
-              icon={isLiked ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-              onClick={() => handleLikePost(post.id)}
+            <LikeButton
+              likes={post.likes?.length || 0}
+              isLiked={isLiked}
+              onLike={async () => {
+                await handleLikePost(post.id);
+                return { 
+                  likes: post.likes?.length || 0,
+                  isLiked: !isLiked
+                };
+              }}
+              targetId={post.id}
+              showText={false}
               style={{ color: colors.text }}
-            >
-              {post.likes?.length || 0}
-            </Button>,
+            />,
             <Button 
               type="text" 
               icon={<MessageOutlined />}
               onClick={() => setShowComments(!showComments)}
               style={{ color: colors.text }}
             >
-              {comments.length || 0}
+              {post.comments?.length || 0}
             </Button>
           ]}
         >
@@ -267,63 +229,37 @@ const CommunityView = ({ communityId, onBack }) => {
         {/* Comments Section */}
         {showComments && (
           <div style={{ marginLeft: 24, marginTop: 8, marginBottom: 16 }}>
-            {/* Add Comment */}
-            {user && (
-              <div style={{ marginBottom: 16 }}>
-                <Space.Compact style={{ width: '100%' }}>
-                  <Input
-                    placeholder="Write a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onPressEnter={handleAddComment}
-                    style={{ 
-                      background: colors.inputBackground, 
-                      color: colors.text,
-                      borderColor: colors.border 
-                    }}
-                  />
-                  <Button 
-                    type="primary" 
-                    icon={<SendOutlined />}
-                    loading={submittingComment}
-                    onClick={handleAddComment}
-                  >
-                    Post
-                  </Button>
-                </Space.Compact>
-              </div>
-            )}
-
-            {/* Comments List */}
-            <div>
-              {comments.map((comment, index) => (
-                <div key={index} style={{ marginBottom: 12 }}>
-                  <Space>
-                    <Avatar 
-                      src={comment.author?.avatar} 
-                      icon={<UserOutlined />} 
-                      size="small"
-                    />
-                    <div>
-                      <Text strong style={{ fontSize: '12px' }}>
-                        {comment.author?.name}
-                      </Text>
-                      <Text type="secondary" style={{ fontSize: '11px', marginLeft: 8 }}>
-                        {new Date(comment.createdAt).toLocaleDateString()}
-                      </Text>
-                      <div>
-                        <Text>{comment.content}</Text>
-                      </div>
-                    </div>
-                  </Space>
-                </div>
-              ))}
-              {comments.length === 0 && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  No comments yet. Be the first to comment!
-                </Text>
-              )}
-            </div>
+            <CommentSection
+              targetId={post.id}
+              targetType="community_post"
+              getComments={async (postId) => {
+                // Return existing comments from post object or fetch fresh
+                const response = await ApiClient.getCommunityPostComments?.(postId);
+                return response || { comments: post.comments || [] };
+              }}
+              addComment={async (postId, data) => {
+                const commentData = {
+                  ...data,
+                  authorId: memberIdToUse
+                };
+                const response = await ApiClient.addCommunityPostComment(postId, commentData);
+                
+                // Update the post in the community state
+                setCommunity(prev => ({
+                  ...prev,
+                  posts: prev.posts.map(p => 
+                    p.id === postId 
+                      ? { ...p, comments: [...(p.comments || []), response.data || response] }
+                      : p
+                  )
+                }));
+                
+                return response.data || response;
+              }}
+              autoRefresh={true}
+              refreshInterval={3000}
+              showTitle={false}
+            />
           </div>
         )}
       </div>
